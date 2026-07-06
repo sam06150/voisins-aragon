@@ -13,6 +13,7 @@ services:
       npm run db:seed &&
       npm run build
     startCommand: npm start
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production
