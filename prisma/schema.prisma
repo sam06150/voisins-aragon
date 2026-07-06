@@ -1,0 +1,428 @@
+// Plateforme "Voisins Collectif et en Colère" — Résidence Aragon
+// Base de données locale SQLite via Prisma.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TENANT
+  MODERATOR
+  SUBADMIN
+  ADMIN
+}
+
+enum AccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum IncidentCategory {
+  REPARATION // réparation nécessaire
+  DEGRADATION // dégradation des parties communes
+  LITIGE_BAILLEUR // litige avec le bailleur
+  NUISANCE // nuisances (bruit, propreté...)
+  SECURITE // sécurité
+  AUTRE
+}
+
+enum IncidentStatus {
+  OUVERT
+  EN_COURS
+  RESOLU
+  CLOS
+}
+
+enum DocumentCategory {
+  MODELE_LETTRE
+  PETITION
+  PREUVE
+  COMPTE_RENDU
+  AUTRE
+}
+
+model Building {
+  id        String   @id @default(cuid())
+  name      String   @unique // "Bâtiment A"
+  code      String   @unique // "A"
+  createdAt DateTime @default(now())
+
+  units           Unit[]
+  incidents       IncidentReport[]
+  forumCategories ForumCategory[]
+  announcements   Announcement[]
+  meetings        Meeting[]
+  documents       Document[]
+  petitions       Petition[]
+  polls           Poll[]
+  helpOffers      HelpOffer[]
+  landlordSteps   LandlordStep[]
+}
+
+model Unit {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id])
+  floor      Int
+  label      String // "3B", "Rez-de-chaussée gauche"
+  createdAt  DateTime @default(now())
+
+  residents User[]
+  incidents IncidentReport[]
+
+  @@unique([buildingId, label])
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role          @default(TENANT)
+  status       AccountStatus @default(PENDING)
+
+  // Bâtiment/étage déclarés à l'inscription (texte libre), résolus par l'admin
+  signupBuildingId String?
+  signupUnitLabel  String?
+
+  unitId String?
+  unit   Unit?   @relation(fields: [unitId], references: [id])
+
+  // Préférences d'annuaire (opt-in par champ)
+  shareInDirectory Boolean @default(false)
+  shareEmail       Boolean @default(false)
+  sharePhone       Boolean @default(false)
+
+  // Recevoir les notifications importantes par e-mail (si SMTP configuré)
+  emailNotifications Boolean @default(true)
+
+  // Horodatage de dernière activité (présence "en ligne")
+  lastSeenAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  incidents      IncidentReport[] @relation("IncidentAuthor")
+  forumThreads   ForumThread[]
+  forumPosts     ForumPost[]
+  announcements  Announcement[]
+  meetings       Meeting[]
+  documents      Document[]
+  incidentPhotos IncidentPhoto[]
+
+  notifications      Notification[]
+  petitions          Petition[]
+  petitionSignatures PetitionSignature[]
+  polls              Poll[]
+  pollVotes          PollVote[]
+  incidentSupports   IncidentSupport[]
+  meetingRsvps       MeetingRSVP[]
+  sentMessages       PrivateMessage[]    @relation("MessageSender")
+  receivedMessages   PrivateMessage[]    @relation("MessageRecipient")
+  helpOffers         HelpOffer[]
+  landlordSteps      LandlordStep[]
+}
+
+model IncidentReport {
+  id          String           @id @default(cuid())
+  title       String
+  description String
+  category    IncidentCategory
+  status      IncidentStatus   @default(OUVERT)
+
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id])
+  unitId     String?
+  unit       Unit?    @relation(fields: [unitId], references: [id])
+
+  authorId String
+  author   User   @relation("IncidentAuthor", fields: [authorId], references: [id])
+
+  photos    IncidentPhoto[]
+  supports  IncidentSupport[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model IncidentPhoto {
+  id         String         @id @default(cuid())
+  incidentId String
+  incident   IncidentReport @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  filePath   String // chemin relatif sous /uploads
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model ForumCategory {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  buildingId  String? // null = espace général (toutes résidences)
+  building    Building? @relation(fields: [buildingId], references: [id])
+
+  threads   ForumThread[]
+  createdAt DateTime      @default(now())
+}
+
+model ForumThread {
+  id         String        @id @default(cuid())
+  categoryId String
+  category   ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  title      String
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  isLocked  Boolean     @default(false)
+  isPinned  Boolean     @default(false)
+  posts     ForumPost[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model ForumPost {
+  id       String      @id @default(cuid())
+  threadId String
+  thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Announcement {
+  id    String @id @default(cuid())
+  title String
+  body  String
+
+  buildingId String? // null = toutes résidences
+  building   Building? @relation(fields: [buildingId], references: [id])
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Meeting {
+  id          String    @id @default(cuid())
+  title       String
+  scheduledAt DateTime
+  location    String?
+  agenda      String?
+  minutesText String?
+
+  buildingId String? // null = toutes résidences
+  building   Building? @relation(fields: [buildingId], references: [id])
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  documents Document[]
+  rsvps     MeetingRSVP[]
+  createdAt DateTime   @default(now())
+}
+
+model Document {
+  id       String           @id @default(cuid())
+  title    String
+  category DocumentCategory
+  filePath String // chemin relatif sous /uploads
+
+  buildingId String? // null = partagé toutes résidences
+  building   Building? @relation(fields: [buildingId], references: [id])
+
+  meetingId String?
+  meeting   Meeting? @relation(fields: [meetingId], references: [id])
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Vague 2 & 3 : mobilisation, communication, entraide
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  ANNONCE
+  REUNION
+  FORUM
+  PETITION
+  SONDAGE
+  MESSAGE
+  SYSTEME
+}
+
+enum RsvpStatus {
+  OUI
+  NON
+  PEUTETRE
+}
+
+enum HelpType {
+  OFFRE
+  DEMANDE
+}
+
+enum LandlordStepType {
+  COURRIER
+  RELANCE
+  REPONSE
+  RENDEZVOUS
+  ACTION
+  AUTRE
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+}
+
+model Petition {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  buildingId  String?
+  building    Building? @relation(fields: [buildingId], references: [id])
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  closed      Boolean   @default(false)
+  goal        Int?
+  createdAt   DateTime  @default(now())
+
+  signatures PetitionSignature[]
+}
+
+model PetitionSignature {
+  id         String   @id @default(cuid())
+  petitionId String
+  petition   Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  @@unique([petitionId, userId])
+}
+
+model Poll {
+  id         String    @id @default(cuid())
+  question   String
+  buildingId String?
+  building   Building? @relation(fields: [buildingId], references: [id])
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id])
+  closed     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  options PollOption[]
+  votes   PollVote[]
+}
+
+model PollOption {
+  id     String @id @default(cuid())
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label  String
+
+  votes PollVote[]
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  createdAt DateTime   @default(now())
+
+  @@unique([pollId, userId])
+}
+
+model IncidentSupport {
+  id         String         @id @default(cuid())
+  incidentId String
+  incident   IncidentReport @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User           @relation(fields: [userId], references: [id])
+  createdAt  DateTime       @default(now())
+
+  @@unique([incidentId, userId])
+}
+
+model MeetingRSVP {
+  id        String     @id @default(cuid())
+  meetingId String
+  meeting   Meeting    @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  status    RsvpStatus
+  createdAt DateTime   @default(now())
+
+  @@unique([meetingId, userId])
+}
+
+model PrivateMessage {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("MessageSender", fields: [senderId], references: [id])
+  recipientId String
+  recipient   User     @relation("MessageRecipient", fields: [recipientId], references: [id])
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([recipientId, read])
+}
+
+model HelpOffer {
+  id          String    @id @default(cuid())
+  type        HelpType
+  title       String
+  description String
+  buildingId  String?
+  building    Building? @relation(fields: [buildingId], references: [id])
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  resolved    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+model LandlordStep {
+  id          String           @id @default(cuid())
+  title       String
+  detail      String?
+  type        LandlordStepType @default(AUTRE)
+  occurredAt  DateTime
+  buildingId  String?
+  building    Building?        @relation(fields: [buildingId], references: [id])
+  authorId    String
+  author      User             @relation(fields: [authorId], references: [id])
+  createdAt   DateTime         @default(now())
+}

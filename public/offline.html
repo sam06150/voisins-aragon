@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hors ligne — Voisins Collectif</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f6f8;
+        color: #1a1a1a;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+      .card {
+        max-width: 360px;
+      }
+      h1 {
+        color: #be123c;
+        font-size: 20px;
+      }
+      p {
+        color: #4b5563;
+        line-height: 1.6;
+      }
+      button {
+        margin-top: 12px;
+        background: #e11d48;
+        color: #fff;
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 18px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Vous êtes hors ligne</h1>
+      <p>
+        La plateforme des Voisins Collectif et en Colère a besoin d'une connexion
+        internet. Vérifiez votre réseau et réessayez.
+      </p>
+      <button onclick="location.reload()">Réessayer</button>
+    </div>
+  </body>
+</html>

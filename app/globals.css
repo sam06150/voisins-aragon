@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f5f6f8;
+  --foreground: #1a1a1a;
+}
+
+.dark {
+  --background: #131517;
+  --foreground: #e8eaed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/*
+  Mode sombre — surcharges non-layered (priorité sur les utilitaires Tailwind).
+  Remappe les surfaces/textes/bordures neutres sans toucher chaque fichier.
+  Les couleurs d'accent (rose/vert/ambre…) sont volontairement conservées.
+*/
+.dark .bg-white {
+  background-color: #1b1e21;
+}
+.dark .bg-gray-50 {
+  background-color: #232629;
+}
+.dark .bg-gray-100 {
+  background-color: #2a2e32;
+}
+.dark .text-gray-900 {
+  color: #f1f3f5;
+}
+.dark .text-gray-800 {
+  color: #e3e6e9;
+}
+.dark .text-gray-700 {
+  color: #d3d7dc;
+}
+.dark .text-gray-600 {
+  color: #b3b9c1;
+}
+.dark .text-gray-500 {
+  color: #98a0aa;
+}
+.dark .text-gray-400 {
+  color: #7d8590;
+}
+.dark .border-gray-100 {
+  border-color: #26292d;
+}
+.dark .border-gray-200 {
+  border-color: #2e3237;
+}
+.dark .border-gray-300 {
+  border-color: #3a3f45;
+}
+.dark .divide-gray-100 > * + * {
+  border-color: #26292d;
+}
+.dark .bg-white\/95 {
+  background-color: rgba(27, 30, 33, 0.95);
+}
+.dark .hover\:bg-gray-50:hover {
+  background-color: #232629;
+}
+.dark .hover\:bg-gray-100:hover {
+  background-color: #2a2e32;
+}

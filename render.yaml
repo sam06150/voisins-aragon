@@ -1,0 +1,40 @@
+# Déploiement automatique sur Render — Voisins Collectif et en Colère
+# Render lit ce fichier et configure le service web tout seul.
+services:
+  - type: web
+    name: voisins-aragon
+    runtime: node
+    plan: free
+    # --include=dev : Prisma CLI et tsx sont des devDependencies nécessaires au build.
+    buildCommand: >-
+      npm install --include=dev &&
+      npx prisma generate &&
+      npx prisma migrate deploy &&
+      npm run db:seed &&
+      npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TZ
+        value: Europe/Paris
+      # SQLite local par défaut (voir DEPLOIEMENT.md pour une base persistante).
+      - key: DATABASE_URL
+        value: file:./prisma/dev.db
+      # Secret de session généré automatiquement par Render.
+      - key: SESSION_SECRET
+        generateValue: true
+      # URL publique de l'app (à renseigner après le 1er déploiement).
+      - key: APP_URL
+        sync: false
+      # E-mails (facultatif) — à coller dans le dashboard Render si besoin.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
