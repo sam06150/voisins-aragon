@@ -41,6 +41,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: "/messages", label: "Messagerie" },
       { href: "/entraide", label: "Entraide" },
+      { href: "/inviter", label: "Inviter des voisins" },
     ],
   },
 ];
@@ -74,7 +75,7 @@ export default function NavBar({
             <span className="text-gray-800">{t("& en Colère")}</span>
           </span>
           <span className="text-[11px] font-medium text-gray-400">
-            {t("Résidence Aragon")}
+            {t("Collectif des locataires")}
           </span>
         </Link>
 

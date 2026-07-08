@@ -7,7 +7,7 @@ const ADMIN_EMAIL = "admin@aragon.local";
 const ADMIN_PASSWORD = "ChangeMoi123!";
 
 async function main() {
-  console.log("Initialisation des données de la Résidence Aragon…");
+  console.log("Initialisation des données du collectif…");
 
   // 1) Les 4 bâtiments.
   const buildingDefs = [
@@ -26,8 +26,8 @@ async function main() {
     });
     buildings.push(building);
 
-    // Quelques logements par bâtiment (étages 0 à 3, 2 logements par étage).
-    for (let floor = 0; floor <= 3; floor++) {
+    // Logements par bâtiment (RDC + étages 1 à 5, 2 logements par étage).
+    for (let floor = 0; floor <= 5; floor++) {
       for (const side of ["Gauche", "Droite"]) {
         const label = `${floor === 0 ? "RDC" : floor} ${side}`;
         await prisma.unit.upsert({
@@ -112,7 +112,7 @@ async function main() {
       data: {
         title: "Bienvenue sur la plateforme du collectif",
         body:
-          "Bienvenue aux locataires de la Résidence Aragon !\n\n" +
+          "Bienvenue aux locataires du collectif !\n\n" +
           "Cette plateforme nous permet de nous organiser : annuaire des voisins, " +
           "signalement des problèmes, forum de discussion, annonces, réunions et " +
           "documents partagés.\n\n" +

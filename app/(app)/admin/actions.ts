@@ -59,6 +59,58 @@ export async function deleteUser(formData: FormData) {
   redirect("/admin/comptes?delok=1");
 }
 
+/**
+ * Met un compte "en veille" : l'accès est suspendu mais le compte et ses
+ * données sont conservés (réversible). On ne peut suspendre qu'un compte de
+ * rôle strictement inférieur.
+ */
+export async function suspendUser(formData: FormData) {
+  const actor = await requireStaff();
+  const userId = formData.get("userId")?.toString() ?? "";
+  if (!userId || userId === actor.id) {
+    redirect("/admin/comptes?suerror=self");
+  }
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target) redirect("/admin/comptes");
+
+  if (rank(actor.role) <= rank(target.role)) {
+    redirect("/admin/comptes?suerror=rank");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { status: "SUSPENDED", lastSeenAt: null },
+  });
+
+  revalidatePath("/admin/comptes");
+  revalidatePath("/annuaire");
+  redirect("/admin/comptes?suok=1");
+}
+
+/** Réactive un compte en veille (repasse en "approuvé"). */
+export async function reactivateUser(formData: FormData) {
+  const actor = await requireStaff();
+  const userId = formData.get("userId")?.toString() ?? "";
+  if (!userId) redirect("/admin/comptes");
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target) redirect("/admin/comptes");
+
+  if (rank(actor.role) <= rank(target.role)) {
+    redirect("/admin/comptes?suerror=rank");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { status: "APPROVED" },
+  });
+
+  revalidatePath("/admin/comptes");
+  revalidatePath("/annuaire");
+  redirect("/admin/comptes?suok=1");
+}
+
 export async function approveAccount(formData: FormData) {
   await requireManager();
 
@@ -115,7 +167,7 @@ export async function approveAccount(formData: FormData) {
     subject: "Votre compte a été validé",
     html: emailLayout(
       "Bienvenue dans le collectif !",
-      `<p>Bonjour ${user.firstName},</p><p>Votre compte sur la plateforme des Voisins Collectif et en Colère de la Résidence Aragon a été validé par un référent. Vous pouvez désormais vous connecter et participer.</p>`,
+      `<p>Bonjour ${user.firstName},</p><p>Votre compte sur la plateforme des Voisins Collectif et en Colère a été validé par un référent. Vous pouvez désormais vous connecter et participer.</p>`,
     ),
   });
 

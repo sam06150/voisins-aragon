@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Voisins Collectif et en Colère — Résidence Aragon",
-    short_name: "Voisins Aragon",
+    name: "Voisins Collectif et en Colère",
+    short_name: "Voisins",
     description:
-      "Plateforme des locataires de la Résidence Aragon : annuaire, signalements, forum, pétitions, réunions et documents.",
+      "Plateforme des locataires : annuaire, signalements, forum, pétitions, réunions et documents.",
     start_url: "/accueil",
     scope: "/",
     display: "standalone",

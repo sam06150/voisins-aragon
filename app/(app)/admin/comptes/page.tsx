@@ -10,8 +10,10 @@ import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
 import {
   approveAccount,
   deleteUser,
+  reactivateUser,
   resetUserPassword,
   setUserRole,
+  suspendUser,
 } from "../actions";
 
 const ASSIGNABLE_ROLES: Role[] = ["TENANT", "MODERATOR", "SUBADMIN", "ADMIN"];
@@ -26,13 +28,15 @@ export default async function AdminComptesPage({
     roleerror?: string;
     delok?: string;
     delerror?: string;
+    suok?: string;
+    suerror?: string;
   }>;
 }) {
   const admin = await requireStaff();
   const { t } = await getI18n();
   const manager = isManager(admin.role);
   const canManageRoles = isAdmin(admin.role);
-  const { pwok, pwerror, roleok, roleerror, delok, delerror } =
+  const { pwok, pwerror, roleok, roleerror, delok, delerror, suok, suerror } =
     await searchParams;
 
   const notDeleted = { email: { not: { startsWith: DELETED_EMAIL_PREFIX } } };
@@ -43,7 +47,10 @@ export default async function AdminComptesPage({
       orderBy: { createdAt: "asc" },
     }),
     prisma.user.findMany({
-      where: { status: { in: ["APPROVED", "REJECTED"] }, ...notDeleted },
+      where: {
+        status: { in: ["APPROVED", "REJECTED", "SUSPENDED"] },
+        ...notDeleted,
+      },
       include: { unit: { include: { building: true } } },
       orderBy: [{ status: "asc" }, { lastName: "asc" }],
     }),
@@ -195,6 +202,20 @@ export default async function AdminComptesPage({
           <Alert kind="success">{t("Compte supprimé.")}</Alert>
         </div>
       ) : null}
+      {suok ? (
+        <div className="mb-4">
+          <Alert kind="success">{t("Statut du compte mis à jour.")}</Alert>
+        </div>
+      ) : null}
+      {suerror ? (
+        <div className="mb-4">
+          <Alert kind="error">
+            {suerror === "self"
+              ? t("Vous ne pouvez pas suspendre votre propre compte.")
+              : t("Vous ne pouvez agir que sur un compte de rôle inférieur au vôtre.")}
+          </Alert>
+        </div>
+      ) : null}
       {delerror ? (
         <div className="mb-4">
           <Alert kind="error">
@@ -221,6 +242,10 @@ export default async function AdminComptesPage({
                     {u.status === "APPROVED" ? (
                       <Badge className="border-green-200 bg-green-50 text-green-700">
                         {t("Approuvé")}
+                      </Badge>
+                    ) : u.status === "SUSPENDED" ? (
+                      <Badge className="border-amber-200 bg-amber-50 text-amber-800">
+                        {t("En veille")}
                       </Badge>
                     ) : (
                       <Badge className="border-red-200 bg-red-50 text-red-700">
@@ -281,6 +306,33 @@ export default async function AdminComptesPage({
                     </div>
                     <Button type="submit" variant="secondary">
                       {t("Appliquer")}
+                    </Button>
+                  </form>
+                ) : null}
+
+                {manager &&
+                rank(admin.role) > rank(u.role) &&
+                u.status === "APPROVED" ? (
+                  <form action={suspendUser}>
+                    <input type="hidden" name="userId" value={u.id} />
+                    <ConfirmButton
+                      variant="neutral"
+                      confirmMessage={t(
+                        "Mettre ce compte en veille ? L'accès sera suspendu, mais le compte et ses données sont conservés (réversible).",
+                      )}
+                    >
+                      {t("Mettre en veille")}
+                    </ConfirmButton>
+                  </form>
+                ) : null}
+
+                {manager &&
+                rank(admin.role) > rank(u.role) &&
+                u.status === "SUSPENDED" ? (
+                  <form action={reactivateUser}>
+                    <input type="hidden" name="userId" value={u.id} />
+                    <Button type="submit" variant="secondary">
+                      {t("Réactiver le compte")}
                     </Button>
                   </form>
                 ) : null}

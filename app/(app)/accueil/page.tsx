@@ -63,9 +63,7 @@ export default async function AccueilPage() {
     <div>
       <PageHeader
         title={`${t("Bonjour")} ${user.firstName} 👋`}
-        description={t(
-          "Le tableau de bord du collectif des locataires de la Résidence Aragon.",
-        )}
+        description={t("Le tableau de bord du collectif des locataires.")}
       />
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -105,6 +103,7 @@ export default async function AccueilPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                 <span className="font-medium">
                   {u.firstName}
+                  {u.lastName ? ` ${u.lastName.charAt(0).toUpperCase()}.` : ""}
                   {u.id === user.id ? ` (${t("vous")})` : ""}
                 </span>
                 <span className="text-gray-400">

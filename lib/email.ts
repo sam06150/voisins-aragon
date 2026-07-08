@@ -64,7 +64,7 @@ export function emailLayout(title: string, bodyHtml: string): string {
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a1a;">
     <div style="border-bottom: 2px solid #e11d48; padding-bottom: 12px; margin-bottom: 20px;">
       <div style="font-size: 18px; font-weight: bold; color: #be123c;">Voisins Collectif &amp; en Colère</div>
-      <div style="font-size: 12px; color: #6b7280;">Résidence Aragon</div>
+      <div style="font-size: 12px; color: #6b7280;">Collectif des locataires</div>
     </div>
     <h1 style="font-size: 18px;">${title}</h1>
     <div style="font-size: 14px; line-height: 1.6; color: #374151;">${bodyHtml}</div>

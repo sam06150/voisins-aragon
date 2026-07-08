@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Field, Input, Select } from "@/components/ui";
+import PasswordInput from "@/components/PasswordInput";
 import { useT } from "@/components/I18nProvider";
 
 type Building = { id: string; name: string };
@@ -97,9 +98,8 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
         htmlFor="password"
         hint={t("8 caractères minimum.")}
       >
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           required
           value={form.password}

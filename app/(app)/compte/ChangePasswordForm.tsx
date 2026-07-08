@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { Alert, Button, Field, Input } from "@/components/ui";
+import { Alert, Button, Field } from "@/components/ui";
+import PasswordInput from "@/components/PasswordInput";
 import { useT } from "@/components/I18nProvider";
 import { changePassword, type PasswordFormState } from "./actions";
 
@@ -20,10 +21,9 @@ export default function ChangePasswordForm() {
       ) : null}
 
       <Field label={t("Mot de passe actuel")} htmlFor="currentPassword">
-        <Input
+        <PasswordInput
           id="currentPassword"
           name="currentPassword"
-          type="password"
           autoComplete="current-password"
           required
         />
@@ -33,19 +33,17 @@ export default function ChangePasswordForm() {
         htmlFor="newPassword"
         hint={t("8 caractères minimum.")}
       >
-        <Input
+        <PasswordInput
           id="newPassword"
           name="newPassword"
-          type="password"
           autoComplete="new-password"
           required
         />
       </Field>
       <Field label={t("Confirmer le nouveau mot de passe")} htmlFor="confirmPassword">
-        <Input
+        <PasswordInput
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           required
         />

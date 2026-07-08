@@ -75,7 +75,7 @@ export default async function DossierPage({
             {t("Dossier de signalements")}
           </h1>
           <p className="mt-1 text-gray-600">
-            {t("Résidence Aragon")}
+            {t("Voisins Collectif et en Colère")}
             {building ? ` — ${t(building.name)}` : ` — ${t("Tous les bâtiments")}`}
           </p>
           <p className="mt-1 text-sm text-gray-500">

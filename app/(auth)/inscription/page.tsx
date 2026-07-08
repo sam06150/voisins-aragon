@@ -23,7 +23,7 @@ export default async function InscriptionPage() {
       <h1 className="mb-1 text-lg font-bold text-gray-900">{t("Inscription")}</h1>
       <p className="mb-5 text-sm text-gray-600">
         {t(
-          "Réservée aux locataires de la Résidence Aragon. Votre compte sera vérifié par un référent du collectif avant activation.",
+          "Réservée aux locataires de la résidence. Votre compte sera vérifié par un référent du collectif avant activation.",
         )}
       </p>
       <SignupForm buildings={buildings} />

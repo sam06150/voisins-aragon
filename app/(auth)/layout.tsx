@@ -17,7 +17,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
             <span className="text-gray-800">{t("& en Colère")}</span>
           </div>
           <div className="mt-1 text-sm font-medium text-gray-500">
-            {t("Résidence Aragon")}
+            {t("Collectif des locataires")}
           </div>
         </Link>
         {children}

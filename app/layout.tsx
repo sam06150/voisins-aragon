@@ -6,14 +6,14 @@ import { I18nProvider } from "@/components/I18nProvider";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
-  title: "Voisins Collectif et en Colère — Résidence Aragon",
+  title: "Voisins Collectif et en Colère",
   description:
-    "Plateforme des locataires de la Résidence Aragon : annuaire, signalements, forum, annonces et documents.",
-  applicationName: "Voisins Aragon",
+    "Plateforme des locataires : annuaire, signalements, forum, annonces et documents.",
+  applicationName: "Voisins Collectif et en Colère",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Voisins Aragon",
+    title: "Voisins Collectif et en Colère",
   },
   icons: {
     icon: "/icon.svg",

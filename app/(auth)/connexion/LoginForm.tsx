@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, Button, Field, Input } from "@/components/ui";
+import PasswordInput from "@/components/PasswordInput";
 import { useT } from "@/components/I18nProvider";
 
 // Identifiant du compte administrateur principal (pré-rempli via l'accès admin).
@@ -73,9 +74,8 @@ export default function LoginForm() {
         />
       </Field>
       <Field label={t("Mot de passe")} htmlFor="password">
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="current-password"
           required
           value={password}

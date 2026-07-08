@@ -57,6 +57,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (user.status === "SUSPENDED") {
+    return NextResponse.json(
+      {
+        error:
+          "Votre compte est en veille (accès suspendu). Contactez un référent du collectif pour le réactiver.",
+      },
+      { status: 403 },
+    );
+  }
+
   registerSuccess(rlKey);
   await createSessionFor(user);
   return NextResponse.json({ ok: true, status: user.status });

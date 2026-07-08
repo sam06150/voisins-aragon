@@ -21,6 +21,7 @@ enum AccountStatus {
   PENDING
   APPROVED
   REJECTED
+  SUSPENDED
 }
 
 enum IncidentCategory {
