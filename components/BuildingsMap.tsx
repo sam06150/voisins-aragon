@@ -2,9 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 export type MapBuilding = {
   name: string;
@@ -30,15 +27,13 @@ export default function BuildingsMap({
       const L = await import("leaflet");
       if (cancelled || !ref.current) return;
 
-      // Corrige les icônes de marqueur par défaut (chemins cassés par le bundler).
-      const icon = L.icon({
-        iconUrl: (markerIcon as unknown as { src: string }).src,
-        iconRetinaUrl: (markerIcon2x as unknown as { src: string }).src,
-        shadowUrl: (markerShadow as unknown as { src: string }).src,
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
+      // Repère HTML (emoji) : toujours visible, sans dépendre d'une image.
+      const icon = L.divIcon({
+        className: "",
+        html: '<div style="font-size:32px;line-height:32px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">📍</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 30],
+        popupAnchor: [0, -28],
       });
 
       const first = buildings[0];

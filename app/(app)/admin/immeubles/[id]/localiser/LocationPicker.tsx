@@ -3,9 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as LMap, Marker as LMarker } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { Alert, Button, Input } from "@/components/ui";
 import { useT } from "@/components/I18nProvider";
 import { saveBuildingCoords } from "../../../actions";
@@ -40,14 +37,12 @@ export default function LocationPicker({
       const L = await import("leaflet");
       if (cancelled || !mapEl.current) return;
 
-      const icon = L.icon({
-        iconUrl: (markerIcon as unknown as { src: string }).src,
-        iconRetinaUrl: (markerIcon2x as unknown as { src: string }).src,
-        shadowUrl: (markerShadow as unknown as { src: string }).src,
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
+      const icon = L.divIcon({
+        className: "",
+        html: '<div style="font-size:36px;line-height:36px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">📍</div>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 34],
+        popupAnchor: [0, -32],
       });
 
       const hasStart = initialLat != null && initialLng != null;
