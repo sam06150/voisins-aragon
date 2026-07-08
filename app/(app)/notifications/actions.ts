@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { notifyUser } from "@/lib/notifications";
+import { sendEmail, emailLayout } from "@/lib/email";
 
-/** Envoie une notification de test à soi-même (in-app + push si activé). */
+/** Envoie une notification de test à soi-même (in-app + push + e-mail si configurés). */
 export async function sendTestNotification() {
   const user = await requireApproved();
   await notifyUser({
@@ -15,6 +16,23 @@ export async function sendTestNotification() {
     message: "🔔 Test — vos notifications fonctionnent !",
     link: "/notifications",
   });
+
+  // E-mail de test : envoyé à l'adresse Gmail configurée (SMTP_USER) ou, à défaut,
+  // à l'e-mail du compte s'il est valide. Sert à vérifier que le SMTP fonctionne.
+  const testTo =
+    process.env.SMTP_USER ||
+    (user.email.includes("@") ? user.email : "");
+  if (testTo) {
+    await sendEmail({
+      to: testTo,
+      subject: "Test — e-mails du collectif",
+      html: emailLayout(
+        "Test réussi 🎉",
+        "<p>Si vous recevez cet e-mail, l'envoi d'e-mails de la plateforme fonctionne correctement.</p>",
+      ),
+    });
+  }
+
   revalidatePath("/notifications");
   redirect("/notifications");
 }
