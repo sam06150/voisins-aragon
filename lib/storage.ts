@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { v2 as cloudinary } from "cloudinary";
 
 const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
 const MAX_SIZE = 10 * 1024 * 1024; // 10 Mo
@@ -13,6 +14,27 @@ export const ALLOWED_MIME: Record<string, string> = {
 };
 
 export class UploadError extends Error {}
+
+// --- Stockage durable en ligne (Cloudinary), activé si les variables
+//     d'environnement sont présentes ; sinon on retombe sur le disque local. ---
+const CLOUDINARY_ENABLED = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET,
+);
+
+if (CLOUDINARY_ENABLED) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+}
+
+export function isCloudinaryEnabled(): boolean {
+  return CLOUDINARY_ENABLED;
+}
 
 function sanitizeSubdir(subdir: string): string {
   // On n'autorise que des sous-dossiers simples (lettres, chiffres, - _ /).
@@ -28,9 +50,25 @@ function sanitizeFilename(name: string): string {
   return base.slice(0, 80) || "fichier";
 }
 
+async function saveToCloudinary(file: File, safeSub: string): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const dataUri = `data:${file.type};base64,${buffer.toString("base64")}`;
+  const isPdf = file.type === "application/pdf";
+  // Les PDF sont envoyés en "raw" (livraison fiable, sans restriction PDF/ZIP) ;
+  // les images en "image". On garde l'extension .pdf dans l'URL pour le navigateur.
+  const result = await cloudinary.uploader.upload(dataUri, {
+    folder: `voisins-aragon/${safeSub}`,
+    resource_type: isPdf ? "raw" : "image",
+    public_id: randomUUID() + (isPdf ? ".pdf" : ""),
+    overwrite: false,
+  });
+  return result.secure_url;
+}
+
 /**
- * Sauvegarde un fichier téléversé dans /uploads/<subdir> et renvoie
- * le chemin RELATIF (séparateurs "/") à stocker en base.
+ * Sauvegarde un fichier téléversé.
+ * - Avec Cloudinary : renvoie l'URL https durable (stockée telle quelle en base).
+ * - Sans Cloudinary : écrit dans /uploads/<subdir> et renvoie le chemin RELATIF.
  */
 export async function saveUploadedFile(
   file: File,
@@ -50,6 +88,11 @@ export async function saveUploadedFile(
   }
 
   const safeSub = sanitizeSubdir(subdir);
+
+  if (CLOUDINARY_ENABLED) {
+    return saveToCloudinary(file, safeSub);
+  }
+
   const dir = path.join(UPLOADS_ROOT, safeSub);
   await fs.mkdir(dir, { recursive: true });
 
@@ -60,6 +103,49 @@ export async function saveUploadedFile(
   await fs.writeFile(dest, buffer);
 
   return path.posix.join(safeSub, filename);
+}
+
+/**
+ * URL publique d'un fichier stocké : une URL Cloudinary (http...) est renvoyée
+ * telle quelle ; un chemin local passe par la route authentifiée /api/uploads.
+ */
+export function publicFileUrl(filePath: string): string {
+  if (/^https?:\/\//i.test(filePath)) return filePath;
+  return `/api/uploads/${filePath}`;
+}
+
+/**
+ * Supprime un fichier stocké (best effort) : Cloudinary ou disque local.
+ */
+export async function deleteStoredFile(filePath: string): Promise<void> {
+  if (/^https?:\/\//i.test(filePath)) {
+    try {
+      // On déduit le resource_type et le public_id depuis l'URL Cloudinary.
+      const m = filePath.match(/\/(image|raw|video)\/upload\/(?:v\d+\/)?(.+)$/);
+      if (m) {
+        const resourceType = m[1] as "image" | "raw" | "video";
+        let publicId = m[2];
+        if (resourceType === "image") {
+          publicId = publicId.replace(/\.[^/.]+$/, ""); // retirer l'extension
+        }
+        await cloudinary.uploader.destroy(publicId, {
+          resource_type: resourceType,
+          invalidate: true,
+        });
+      }
+    } catch {
+      // best effort : on ignore les erreurs de suppression distante
+    }
+    return;
+  }
+  const absolute = resolveUploadPath(filePath);
+  if (absolute) {
+    try {
+      await fs.unlink(absolute);
+    } catch {
+      // fichier déjà absent : on ignore
+    }
+  }
 }
 
 /**

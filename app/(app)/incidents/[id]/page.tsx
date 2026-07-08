@@ -12,6 +12,7 @@ import {
   incidentStatusLabels,
 } from "@/lib/labels";
 import { incidentStatuses } from "@/lib/validation";
+import { publicFileUrl } from "@/lib/storage";
 import { toggleSupport, updateIncidentStatus } from "../actions";
 
 export default async function IncidentDetailPage({
@@ -88,14 +89,14 @@ export default async function IncidentDetailPage({
             {images.map((p) => (
               <a
                 key={p.id}
-                href={`/api/uploads/${p.filePath}`}
+                href={publicFileUrl(p.filePath)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block overflow-hidden rounded-lg border border-gray-200"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/api/uploads/${p.filePath}`}
+                  src={publicFileUrl(p.filePath)}
                   alt="Photo du signalement"
                   className="h-32 w-full object-cover"
                 />
@@ -109,7 +110,7 @@ export default async function IncidentDetailPage({
             {pdfs.map((p) => (
               <a
                 key={p.id}
-                href={`/api/uploads/${p.filePath}`}
+                href={publicFileUrl(p.filePath)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm font-medium text-rose-700 hover:underline"

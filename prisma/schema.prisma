@@ -1,12 +1,12 @@
 // Plateforme "Voisins Collectif et en Colère" — Résidence Aragon
-// Base de données locale SQLite via Prisma.
+// Base de données PostgreSQL (Neon) via Prisma.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

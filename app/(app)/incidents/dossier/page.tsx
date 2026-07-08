@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { publicFileUrl } from "@/lib/storage";
 import { Select } from "@/components/ui";
 import PrintButton from "@/components/PrintButton";
 import {
@@ -113,7 +114,7 @@ export default async function DossierPage({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           key={p.id}
-                          src={`/api/uploads/${p.filePath}`}
+                          src={publicFileUrl(p.filePath)}
                           alt="Preuve"
                           className="h-32 w-full rounded border border-gray-200 object-cover"
                         />

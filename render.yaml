@@ -6,10 +6,12 @@ services:
     runtime: node
     plan: free
     # --include=dev : Prisma CLI et tsx sont des devDependencies nécessaires au build.
+    # `prisma db push` crée le schéma directement dans Postgres (Neon), sans
+    # fichiers de migration ; le seed (idempotent) garantit les comptes admin.
     buildCommand: >-
       npm install --include=dev &&
       npx prisma generate &&
-      npx prisma migrate deploy &&
+      npx prisma db push &&
       npm run db:seed &&
       npm run build
     startCommand: npm start
@@ -19,9 +21,16 @@ services:
         value: production
       - key: TZ
         value: Europe/Paris
-      # SQLite local par défaut (voir DEPLOIEMENT.md pour une base persistante).
+      # Base Postgres durable (Neon) — valeur renseignée dans le dashboard Render.
       - key: DATABASE_URL
-        value: file:./prisma/dev.db
+        sync: false
+      # Stockage durable des fichiers (Cloudinary) — valeurs dans le dashboard.
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
       # Secret de session généré automatiquement par Render.
       - key: SESSION_SECRET
         generateValue: true

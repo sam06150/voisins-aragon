@@ -4,6 +4,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isManager } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { publicFileUrl } from "@/lib/storage";
 import { Alert, Badge, Button, Card, LinkButton, Textarea } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import {
@@ -124,7 +125,7 @@ export default async function ReunionDetailPage({
               {meeting.documents.map((d) => (
                 <li key={d.id}>
                   <a
-                    href={`/api/uploads/${d.filePath}`}
+                    href={publicFileUrl(d.filePath)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium text-rose-700 hover:underline"

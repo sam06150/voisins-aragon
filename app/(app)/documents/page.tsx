@@ -8,6 +8,7 @@ import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader } from "@/compon
 import ConfirmButton from "@/components/ConfirmButton";
 import { documentCategoryLabels, formatDate } from "@/lib/labels";
 import { documentCategories } from "@/lib/validation";
+import { publicFileUrl } from "@/lib/storage";
 import { deleteDocument } from "./actions";
 
 export default async function DocumentsPage({
@@ -80,7 +81,7 @@ export default async function DocumentsPage({
                 </Badge>
               </div>
               <a
-                href={`/api/uploads/${d.filePath}`}
+                href={publicFileUrl(d.filePath)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-gray-900 hover:text-rose-700 hover:underline"

@@ -1,13 +1,12 @@
 "use server";
 
-import { promises as fs } from "fs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isStaff } from "@/lib/roles";
 import { documentMetaSchema } from "@/lib/validation";
-import { ALLOWED_MIME, resolveUploadPath, saveUploadedFile } from "@/lib/storage";
+import { ALLOWED_MIME, deleteStoredFile, saveUploadedFile } from "@/lib/storage";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 
@@ -74,15 +73,8 @@ export async function deleteDocument(formData: FormData) {
 
   await prisma.document.delete({ where: { id } });
 
-  // Suppression du fichier sur disque (best effort).
-  const absolute = resolveUploadPath(doc.filePath);
-  if (absolute) {
-    try {
-      await fs.unlink(absolute);
-    } catch {
-      // fichier déjà absent : on ignore
-    }
-  }
+  // Suppression du fichier (Cloudinary ou disque local), best effort.
+  await deleteStoredFile(doc.filePath);
 
   revalidatePath("/documents");
   redirect("/documents");
