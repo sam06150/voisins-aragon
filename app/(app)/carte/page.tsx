@@ -45,6 +45,7 @@ export default async function CartePage() {
         </EmptyState>
       ) : (
         <BuildingsMap
+          residenceName={residenceName}
           buildings={located.map((b) => ({
             name: b.name,
             address: b.address,

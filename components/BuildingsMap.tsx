@@ -15,8 +15,10 @@ export type MapBuilding = {
 
 export default function BuildingsMap({
   buildings,
+  residenceName = "",
 }: {
   buildings: MapBuilding[];
+  residenceName?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -72,9 +74,16 @@ export default function BuildingsMap({
   }, [buildings]);
 
   return (
-    <div
-      ref={ref}
-      className="h-[70vh] min-h-80 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm"
-    />
+    <div className="relative">
+      {residenceName ? (
+        <div className="pointer-events-none absolute left-3 top-3 z-[1100] rounded-lg bg-white/95 px-3 py-1.5 text-sm font-bold text-gray-900 shadow ring-1 ring-gray-200">
+          📍 {residenceName}
+        </div>
+      ) : null}
+      <div
+        ref={ref}
+        className="h-[70vh] min-h-80 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm"
+      />
+    </div>
   );
 }
