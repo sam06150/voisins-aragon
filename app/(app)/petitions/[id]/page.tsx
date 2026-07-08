@@ -7,7 +7,12 @@ import { prisma } from "@/lib/db";
 import { Badge, Button, Card, Textarea } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate } from "@/lib/labels";
-import { closePetition, signPetition, unsignPetition } from "../actions";
+import {
+  closePetition,
+  deletePetition,
+  signPetition,
+  unsignPetition,
+} from "../actions";
 
 export default async function PetitionDetailPage({
   params,
@@ -130,19 +135,32 @@ export default async function PetitionDetailPage({
             {petition.author.lastName} · {formatDate(petition.createdAt)}
           </p>
           {canManage ? (
-            <form action={closePetition}>
-              <input type="hidden" name="petitionId" value={petition.id} />
-              <ConfirmButton
-                variant="neutral"
-                confirmMessage={
-                  petition.closed
-                    ? t("Rouvrir cette pétition ?")
-                    : t("Clôturer cette pétition ?")
-                }
-              >
-                {petition.closed ? t("Rouvrir") : t("Clôturer")}
-              </ConfirmButton>
-            </form>
+            <div className="flex items-center gap-2">
+              <form action={closePetition}>
+                <input type="hidden" name="petitionId" value={petition.id} />
+                <ConfirmButton
+                  variant="neutral"
+                  confirmMessage={
+                    petition.closed
+                      ? t("Rouvrir cette pétition ?")
+                      : t("Clôturer cette pétition ?")
+                  }
+                >
+                  {petition.closed ? t("Rouvrir") : t("Clôturer")}
+                </ConfirmButton>
+              </form>
+              <form action={deletePetition}>
+                <input type="hidden" name="petitionId" value={petition.id} />
+                <ConfirmButton
+                  variant="ghost"
+                  confirmMessage={t(
+                    "Supprimer définitivement cette pétition et ses signatures ?",
+                  )}
+                >
+                  🗑️ {t("Supprimer")}
+                </ConfirmButton>
+              </form>
+            </div>
           ) : null}
         </div>
       </Card>

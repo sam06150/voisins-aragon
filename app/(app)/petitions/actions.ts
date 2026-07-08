@@ -109,3 +109,24 @@ export async function closePetition(formData: FormData) {
   revalidatePath(`/petitions/${petitionId}`);
   redirect(`/petitions/${petitionId}`);
 }
+
+/** Supprime une pétition (auteur ou staff). Signatures supprimées en cascade. */
+export async function deletePetition(formData: FormData) {
+  const user = await requireApproved();
+  const petitionId = formData.get("petitionId")?.toString() ?? "";
+  if (!petitionId) redirect("/petitions");
+
+  const petition = await prisma.petition.findUnique({
+    where: { id: petitionId },
+  });
+  if (!petition) redirect("/petitions");
+
+  if (petition.authorId !== user.id && !isStaff(user.role)) {
+    redirect(`/petitions/${petitionId}?error=forbidden`);
+  }
+
+  await prisma.petition.delete({ where: { id: petitionId } });
+
+  revalidatePath("/petitions");
+  redirect("/petitions");
+}

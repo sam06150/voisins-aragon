@@ -13,7 +13,8 @@ import {
 } from "@/lib/labels";
 import { incidentStatuses } from "@/lib/validation";
 import { publicFileUrl } from "@/lib/storage";
-import { toggleSupport, updateIncidentStatus } from "../actions";
+import ConfirmButton from "@/components/ConfirmButton";
+import { deleteIncident, toggleSupport, updateIncidentStatus } from "../actions";
 
 export default async function IncidentDetailPage({
   params,
@@ -40,6 +41,7 @@ export default async function IncidentDetailPage({
   if (!incident) notFound();
 
   const isAdmin = isStaff(user.role);
+  const canDelete = incident.authorId === user.id || isAdmin;
   const supportCount = incident.supports.length;
   const iSupport = incident.supports.some((s) => s.userId === user.id);
   const images = incident.photos.filter((p) => !p.filePath.endsWith(".pdf"));
@@ -144,6 +146,22 @@ export default async function IncidentDetailPage({
           </form>
         </div>
       </Card>
+
+      {canDelete ? (
+        <div className="mt-4 flex justify-end">
+          <form action={deleteIncident}>
+            <input type="hidden" name="incidentId" value={incident.id} />
+            <ConfirmButton
+              variant="ghost"
+              confirmMessage={t(
+                "Supprimer définitivement ce signalement et ses photos ?",
+              )}
+            >
+              🗑️ {t("Supprimer le signalement")}
+            </ConfirmButton>
+          </form>
+        </div>
+      ) : null}
 
       {isAdmin ? (
         <Card className="mt-4">

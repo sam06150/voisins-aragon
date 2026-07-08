@@ -93,3 +93,22 @@ export async function closePoll(formData: FormData) {
   revalidatePath(`/sondages/${pollId}`);
   redirect(`/sondages/${pollId}`);
 }
+
+/** Supprime un sondage (auteur ou staff). Options et votes supprimés en cascade. */
+export async function deletePoll(formData: FormData) {
+  const user = await requireApproved();
+  const pollId = formData.get("pollId")?.toString() ?? "";
+  if (!pollId) redirect("/sondages");
+
+  const poll = await prisma.poll.findUnique({ where: { id: pollId } });
+  if (!poll) redirect("/sondages");
+
+  if (poll.authorId !== user.id && !isStaff(user.role)) {
+    redirect(`/sondages/${pollId}?error=forbidden`);
+  }
+
+  await prisma.poll.delete({ where: { id: pollId } });
+
+  revalidatePath("/sondages");
+  redirect("/sondages");
+}

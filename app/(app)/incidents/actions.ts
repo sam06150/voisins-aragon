@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireStaff, requireApproved } from "@/lib/auth";
+import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 import { incidentSchema, incidentStatusSchema } from "@/lib/validation";
-import { ALLOWED_MIME, saveUploadedFile } from "@/lib/storage";
+import { ALLOWED_MIME, deleteStoredFile, saveUploadedFile } from "@/lib/storage";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 
@@ -110,4 +111,35 @@ export async function updateIncidentStatus(formData: FormData) {
   revalidatePath(`/incidents/${incidentId}`);
   revalidatePath("/incidents");
   redirect(`/incidents/${incidentId}?ok=1`);
+}
+
+/**
+ * Supprime un signalement (et ses photos). Réservé à l'auteur ou au staff.
+ * Les photos et soutiens liés sont supprimés en cascade (voir schéma).
+ */
+export async function deleteIncident(formData: FormData) {
+  const user = await requireApproved();
+  const incidentId = formData.get("incidentId")?.toString() ?? "";
+  if (!incidentId) redirect("/incidents");
+
+  const incident = await prisma.incidentReport.findUnique({
+    where: { id: incidentId },
+    include: { photos: true },
+  });
+  if (!incident) redirect("/incidents");
+
+  // Seuls l'auteur ou un membre du staff (modérateur/sous-admin/admin) peuvent supprimer.
+  if (incident.authorId !== user.id && !isStaff(user.role)) {
+    redirect(`/incidents/${incidentId}?error=forbidden`);
+  }
+
+  // Nettoyage des fichiers (Cloudinary ou disque local), best effort.
+  for (const photo of incident.photos) {
+    await deleteStoredFile(photo.filePath);
+  }
+
+  await prisma.incidentReport.delete({ where: { id: incidentId } });
+
+  revalidatePath("/incidents");
+  redirect("/incidents");
 }

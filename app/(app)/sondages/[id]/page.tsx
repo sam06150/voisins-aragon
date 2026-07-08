@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 import { Badge, Card } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate } from "@/lib/labels";
-import { closePoll, votePoll } from "../actions";
+import { closePoll, deletePoll, votePoll } from "../actions";
 
 export default async function SondageDetailPage({
   params,
@@ -146,19 +146,32 @@ export default async function SondageDetailPage({
             {poll.author.lastName} · {formatDate(poll.createdAt)}
           </p>
           {canManage ? (
-            <form action={closePoll}>
-              <input type="hidden" name="pollId" value={poll.id} />
-              <ConfirmButton
-                variant="neutral"
-                confirmMessage={
-                  poll.closed
-                    ? t("Rouvrir ce sondage ?")
-                    : t("Clôturer ce sondage ?")
-                }
-              >
-                {poll.closed ? t("Rouvrir") : t("Clôturer")}
-              </ConfirmButton>
-            </form>
+            <div className="flex items-center gap-2">
+              <form action={closePoll}>
+                <input type="hidden" name="pollId" value={poll.id} />
+                <ConfirmButton
+                  variant="neutral"
+                  confirmMessage={
+                    poll.closed
+                      ? t("Rouvrir ce sondage ?")
+                      : t("Clôturer ce sondage ?")
+                  }
+                >
+                  {poll.closed ? t("Rouvrir") : t("Clôturer")}
+                </ConfirmButton>
+              </form>
+              <form action={deletePoll}>
+                <input type="hidden" name="pollId" value={poll.id} />
+                <ConfirmButton
+                  variant="ghost"
+                  confirmMessage={t(
+                    "Supprimer définitivement ce sondage et ses votes ?",
+                  )}
+                >
+                  🗑️ {t("Supprimer")}
+                </ConfirmButton>
+              </form>
+            </div>
           ) : null}
         </div>
       </Card>
