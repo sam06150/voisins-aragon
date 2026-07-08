@@ -14,6 +14,8 @@ import { prisma } from "@/lib/db";
 import { adminResetPasswordSchema, promoteSchema } from "@/lib/validation";
 import { sendEmail, emailLayout } from "@/lib/email";
 import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
+import { geocodeAddress } from "@/lib/geocode";
+import { setSetting } from "@/lib/settings";
 
 /**
  * "Supprime" un compte : efface les données personnelles et coupe l'accès,
@@ -248,4 +250,72 @@ export async function createUnit(formData: FormData) {
 
   revalidatePath("/admin/immeubles");
   redirect("/admin/immeubles?ok=1");
+}
+
+/** Crée un nouveau bâtiment ; géocode l'adresse pour la carte si fournie. */
+export async function createBuilding(formData: FormData) {
+  await requireManager();
+  const name = formData.get("name")?.toString().trim() ?? "";
+  const code = formData.get("code")?.toString().trim().toUpperCase() ?? "";
+  const address = formData.get("address")?.toString().trim() || null;
+  if (!name || !code) redirect("/admin/immeubles?berror=champs");
+
+  const exists = await prisma.building.findFirst({
+    where: { OR: [{ code }, { name }] },
+  });
+  if (exists) redirect("/admin/immeubles?berror=exists");
+
+  const coords = address ? await geocodeAddress(address) : null;
+  await prisma.building.create({
+    data: {
+      name,
+      code,
+      address,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+    },
+  });
+
+  revalidatePath("/admin/immeubles");
+  revalidatePath("/carte");
+  redirect(
+    address && !coords
+      ? "/admin/immeubles?bwarn=geo"
+      : "/admin/immeubles?bok=1",
+  );
+}
+
+/** Met à jour l'adresse d'un bâtiment et re-géocode ses coordonnées. */
+export async function updateBuildingLocation(formData: FormData) {
+  await requireManager();
+  const id = formData.get("buildingId")?.toString() ?? "";
+  const address = formData.get("address")?.toString().trim() || null;
+  if (!id) redirect("/admin/immeubles");
+
+  const coords = address ? await geocodeAddress(address) : null;
+  await prisma.building.update({
+    where: { id },
+    data: {
+      address,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+    },
+  });
+
+  revalidatePath("/admin/immeubles");
+  revalidatePath("/carte");
+  redirect(
+    address && !coords
+      ? "/admin/immeubles?bwarn=geo"
+      : "/admin/immeubles?bok=1",
+  );
+}
+
+/** Enregistre le nom de la résidence (affiché dans l'app). */
+export async function setResidenceName(formData: FormData) {
+  await requireManager();
+  const name = formData.get("residenceName")?.toString().trim() ?? "";
+  await setSetting("residence_name", name);
+  revalidatePath("/", "layout");
+  redirect("/admin/immeubles?rok=1");
 }

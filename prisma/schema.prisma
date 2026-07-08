@@ -52,6 +52,9 @@ model Building {
   id        String   @id @default(cuid())
   name      String   @unique // "Bâtiment A"
   code      String   @unique // "A"
+  address   String? // adresse postale (pour la carte)
+  latitude  Float? // coordonnées géographiques (géocodées depuis l'adresse)
+  longitude Float?
   createdAt DateTime @default(now())
 
   units           Unit[]
@@ -64,6 +67,13 @@ model Building {
   polls           Poll[]
   helpOffers      HelpOffer[]
   landlordSteps   LandlordStep[]
+}
+
+/** Réglages généraux du collectif (clé/valeur), ex : nom de la résidence. */
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 model Unit {

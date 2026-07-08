@@ -35,6 +35,7 @@ const GROUPS: NavGroup[] = [
       { href: "/annonces", label: "Annonces" },
       { href: "/reunions", label: "Réunions" },
       { href: "/documents", label: "Documents" },
+      { href: "/carte", label: "Carte" },
     ],
   },
   {
@@ -52,11 +53,13 @@ export default function NavBar({
   isAdmin,
   unreadNotifications = 0,
   unreadMessages = 0,
+  residenceName = "",
 }: {
   firstName: string;
   isAdmin: boolean;
   unreadNotifications?: number;
   unreadMessages?: number;
+  residenceName?: string;
 }) {
   const pathname = usePathname();
   const t = useT();
@@ -76,7 +79,7 @@ export default function NavBar({
             <span className="text-gray-800">{t("& en Colère")}</span>
           </span>
           <span className="text-[11px] font-medium text-gray-400">
-            {t("Collectif des locataires")}
+            {residenceName || t("Collectif des locataires")}
           </span>
         </Link>
 

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { requireApproved } from "@/lib/auth";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { getResidenceName } from "@/lib/settings";
 import NavBar from "@/components/NavBar";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -16,12 +17,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     });
   }
 
-  const [unreadNotifications, unreadMessages] = await Promise.all([
-    prisma.notification.count({ where: { userId: user.id, read: false } }),
-    prisma.privateMessage.count({
-      where: { recipientId: user.id, read: false },
-    }),
-  ]);
+  const [unreadNotifications, unreadMessages, residenceName] =
+    await Promise.all([
+      prisma.notification.count({ where: { userId: user.id, read: false } }),
+      prisma.privateMessage.count({
+        where: { recipientId: user.id, read: false },
+      }),
+      getResidenceName(),
+    ]);
 
   return (
     <div className="min-h-screen">
@@ -30,6 +33,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         isAdmin={isStaff(user.role)}
         unreadNotifications={unreadNotifications}
         unreadMessages={unreadMessages}
+        residenceName={residenceName}
       />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</main>
     </div>
