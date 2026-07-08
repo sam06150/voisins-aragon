@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { Button, Card, EmptyState, PageHeader } from "@/components/ui";
 import EnablePushButton from "@/components/EnablePushButton";
 import { formatDateTime } from "@/lib/labels";
-import { markAllRead, openNotification } from "./actions";
+import { markAllRead, openNotification, sendTestNotification } from "./actions";
 
 const typeIcons: Record<string, string> = {
   ANNONCE: "📣",
@@ -54,7 +54,14 @@ export default async function NotificationsPage() {
               {t("Recevez un bip même quand l'appli est fermée (réunions, urgences, nouveaux signalements).")}
             </p>
           </div>
-          <EnablePushButton />
+          <div className="flex flex-col items-start gap-2">
+            <EnablePushButton />
+            <form action={sendTestNotification}>
+              <Button type="submit" variant="secondary">
+                {t("Tester la notification")}
+              </Button>
+            </form>
+          </div>
         </div>
       </Card>
 

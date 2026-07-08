@@ -4,6 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { notifyUser } from "@/lib/notifications";
+
+/** Envoie une notification de test à soi-même (in-app + push si activé). */
+export async function sendTestNotification() {
+  const user = await requireApproved();
+  await notifyUser({
+    userId: user.id,
+    type: "SYSTEME",
+    message: "🔔 Test — vos notifications fonctionnent !",
+    link: "/notifications",
+  });
+  revalidatePath("/notifications");
+  redirect("/notifications");
+}
 
 export async function markAllRead() {
   const user = await requireApproved();
