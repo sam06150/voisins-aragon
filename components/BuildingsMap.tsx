@@ -44,13 +44,32 @@ export default function BuildingsMap({
       const first = buildings[0];
       map = L.map(ref.current).setView(
         first ? [first.latitude, first.longitude] : [46.6, 2.4],
-        first ? 16 : 5,
+        first ? 18 : 5,
       );
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap",
-        maxZoom: 19,
-      }).addTo(map);
+      // Fond de carte : Plan (OSM) ou Satellite (photo aérienne Esri + noms).
+      const plan = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        { attribution: "&copy; OpenStreetMap", maxZoom: 19 },
+      );
+      const satellite = L.layerGroup([
+        L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          { attribution: "Imagerie &copy; Esri", maxZoom: 19 },
+        ),
+        L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+          { maxZoom: 19 },
+        ),
+      ]);
+      satellite.addTo(map);
+      L.control
+        .layers(
+          { Satellite: satellite, Plan: plan },
+          {},
+          { position: "topright" },
+        )
+        .addTo(map);
 
       const points: [number, number][] = [];
       for (const b of buildings) {

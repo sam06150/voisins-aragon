@@ -57,10 +57,29 @@ export default function LocationPicker({
 
       const map = L.map(mapEl.current).setView(start, hasStart ? 18 : 5);
       mapRef.current = map;
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap",
-        maxZoom: 19,
-      }).addTo(map);
+
+      const plan = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        { attribution: "&copy; OpenStreetMap", maxZoom: 19 },
+      );
+      const satellite = L.layerGroup([
+        L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          { attribution: "Imagerie &copy; Esri", maxZoom: 19 },
+        ),
+        L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+          { maxZoom: 19 },
+        ),
+      ]);
+      satellite.addTo(map);
+      L.control
+        .layers(
+          { Satellite: satellite, Plan: plan },
+          {},
+          { position: "topright" },
+        )
+        .addTo(map);
 
       const marker = L.marker(start, { draggable: true, icon }).addTo(map);
       markerRef.current = marker;
