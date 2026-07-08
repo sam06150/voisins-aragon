@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { Card, PageHeader } from "@/components/ui";
+import InstallAppButton from "@/components/InstallAppButton";
 import CopyLinkButton from "./CopyLinkButton";
 
 export default async function InviterPage() {
@@ -40,6 +41,18 @@ export default async function InviterPage() {
         <p className="mt-6 text-xs text-gray-400">
           {t("Astuce : vos voisins peuvent scanner le QR code avec l'appareil photo de leur téléphone.")}
         </p>
+      </Card>
+
+      <Card className="mt-4 text-center">
+        <h2 className="text-sm font-semibold text-gray-900">
+          {t("Installer l'application")}
+        </h2>
+        <p className="mt-1 text-xs text-gray-500">
+          {t("Ajoutez l'appli à l'écran d'accueil pour l'ouvrir comme une vraie application.")}
+        </p>
+        <div className="mt-3 flex justify-center">
+          <InstallAppButton />
+        </div>
       </Card>
     </div>
   );
