@@ -1,0 +1,20 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    - cron: "*/13 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /healthz
+        run: |
+          URL="${{ vars.PING_URL }}"
+          if [ -z "$URL" ]; then
+            echo "PING_URL non defini."
+            exit 0
+          fi
+          echo "Ping $URL/healthz"
+          curl -fsS --max-time 90 --retry 2 --retry-delay 15 --retry-all-errors "$URL/healthz" && echo " - OK" || echo "Reveil lent : le serveur a ete sollicite, il sera chaud au prochain ping."
