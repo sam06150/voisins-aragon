@@ -2,6 +2,27 @@ import { prisma } from "./db";
 import type { NotificationType } from "@prisma/client";
 import { sendEmail, emailLayout } from "./email";
 
+const APP_URL = process.env.APP_URL || "";
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/** Corps HTML d'un e-mail de notification : le détail + un bouton vers l'appli. */
+function notificationEmailHtml(detail: string | undefined, link?: string): string {
+  const href = link ? `${APP_URL}${link}` : APP_URL || "#";
+  const detailHtml = detail
+    ? `<p style="white-space:pre-wrap;">${escapeHtml(detail).replace(/\n/g, "<br>")}</p>`
+    : "<p>Connectez-vous pour en savoir plus.</p>";
+  const button = APP_URL
+    ? `<p style="margin-top:20px;"><a href="${href}" style="display:inline-block;background:#e11d48;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:bold;">Ouvrir la plateforme</a></p>`
+    : "";
+  return detailHtml + button;
+}
+
 /**
  * Crée une notification pour tous les locataires approuvés concernés,
  * en excluant l'auteur. Si buildingId est fourni, cible les résidents de
@@ -15,8 +36,10 @@ export async function notifyResidents(params: {
   buildingId?: string | null;
   excludeUserId?: string;
   email?: boolean;
+  detail?: string;
 }) {
-  const { type, message, link, buildingId, excludeUserId, email } = params;
+  const { type, message, link, buildingId, excludeUserId, email, detail } =
+    params;
 
   const users = await prisma.user.findMany({
     where: {
@@ -44,13 +67,10 @@ export async function notifyResidents(params: {
 
   if (email) {
     const recipients = users.filter((u) => u.emailNotifications);
+    const html = emailLayout(message, notificationEmailHtml(detail, link));
     await Promise.all(
       recipients.map((u) =>
-        sendEmail({
-          to: u.email,
-          subject: message,
-          html: emailLayout(message, "<p>Connectez-vous pour en savoir plus.</p>"),
-        }),
+        sendEmail({ to: u.email, subject: message, html }),
       ),
     );
   }

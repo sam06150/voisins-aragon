@@ -39,6 +39,7 @@ export async function createAnnouncement(
   await notifyResidents({
     type: "ANNONCE",
     message: `Nouvelle annonce : « ${data.title} »`,
+    detail: data.body,
     link: "/annonces",
     buildingId: data.buildingId ? data.buildingId : null,
     excludeUserId: admin.id,
