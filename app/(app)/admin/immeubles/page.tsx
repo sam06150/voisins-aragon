@@ -190,6 +190,13 @@ export default async function AdminImmeublesPage({
               </Button>
             </form>
 
+            <Link
+              href={`/admin/immeubles/${b.id}/localiser`}
+              className="mt-2 inline-block text-sm font-medium text-rose-700 hover:underline"
+            >
+              🗺️ {t("Situer précisément sur la carte")}
+            </Link>
+
             {b.units.length === 0 ? (
               <p className="mt-3 text-sm text-gray-400">
                 {t("Aucun logement enregistré.")}

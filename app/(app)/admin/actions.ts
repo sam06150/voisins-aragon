@@ -311,6 +311,27 @@ export async function updateBuildingLocation(formData: FormData) {
   );
 }
 
+/** Enregistre l'emplacement précis d'un bâtiment (coordonnées choisies sur la carte). */
+export async function saveBuildingCoords(formData: FormData) {
+  await requireManager();
+  const id = formData.get("buildingId")?.toString() ?? "";
+  const address = formData.get("address")?.toString().trim() || null;
+  const lat = Number.parseFloat(formData.get("latitude")?.toString() ?? "");
+  const lng = Number.parseFloat(formData.get("longitude")?.toString() ?? "");
+  if (!id || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    redirect("/admin/immeubles?berror=champs");
+  }
+
+  await prisma.building.update({
+    where: { id },
+    data: { address, latitude: lat, longitude: lng },
+  });
+
+  revalidatePath("/admin/immeubles");
+  revalidatePath("/carte");
+  redirect("/admin/immeubles?bok=1");
+}
+
 /** Enregistre le nom de la résidence (affiché dans l'app). */
 export async function setResidenceName(formData: FormData) {
   await requireManager();
