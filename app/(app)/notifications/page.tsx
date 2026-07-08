@@ -1,7 +1,8 @@
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
-import { Button, EmptyState, PageHeader } from "@/components/ui";
+import { Button, Card, EmptyState, PageHeader } from "@/components/ui";
+import EnablePushButton from "@/components/EnablePushButton";
 import { formatDateTime } from "@/lib/labels";
 import { markAllRead, openNotification } from "./actions";
 
@@ -42,6 +43,20 @@ export default async function NotificationsPage() {
           ) : undefined
         }
       />
+
+      <Card className="mb-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">
+              {t("Alertes sur votre téléphone")}
+            </h2>
+            <p className="text-xs text-gray-500">
+              {t("Recevez un bip même quand l'appli est fermée (réunions, urgences, nouveaux signalements).")}
+            </p>
+          </div>
+          <EnablePushButton />
+        </div>
+      </Card>
 
       {notifications.length === 0 ? (
         <EmptyState>{t("Aucune notification pour l'instant.")}</EmptyState>

@@ -130,6 +130,18 @@ model User {
   receivedMessages   PrivateMessage[]    @relation("MessageRecipient")
   helpOffers         HelpOffer[]
   landlordSteps      LandlordStep[]
+  pushSubscriptions  PushSubscription[]
+}
+
+/** Abonnement d'un appareil aux notifications push (Web Push). */
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
 }
 
 model IncidentReport {

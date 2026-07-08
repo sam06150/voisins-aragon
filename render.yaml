@@ -31,6 +31,13 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      # Notifications push (Web Push / VAPID) — valeurs dans le dashboard.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:sdsb.2023@gmail.com
       # Secret de session généré automatiquement par Render.
       - key: SESSION_SECRET
         generateValue: true

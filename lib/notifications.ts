@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import type { NotificationType } from "@prisma/client";
 import { sendEmail, emailLayout } from "./email";
+import { sendPushToUsers } from "./push";
 
 const APP_URL = process.env.APP_URL || "";
 
@@ -65,6 +66,12 @@ export async function notifyResidents(params: {
     })),
   });
 
+  // Notifications push (téléphone), best effort.
+  await sendPushToUsers(
+    users.map((u) => u.id),
+    { title: message, body: detail, url: link },
+  );
+
   if (email) {
     const recipients = users.filter((u) => u.emailNotifications);
     const html = emailLayout(message, notificationEmailHtml(detail, link));
@@ -91,6 +98,11 @@ export async function notifyUser(params: {
       message: params.message,
       link: params.link ?? null,
     },
+  });
+
+  await sendPushToUsers([params.userId], {
+    title: params.message,
+    url: params.link,
   });
 
   if (params.email) {
