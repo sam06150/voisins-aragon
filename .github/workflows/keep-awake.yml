@@ -16,4 +16,5 @@ jobs:
             echo "PING_URL non defini."
             exit 0
           fi
-          curl -fsS --max-time 30 "$URL/healthz" && echo " - OK"
+          echo "Ping $URL/healthz"
+          curl -fsS --max-time 90 --retry 2 --retry-delay 15 --retry-all-errors "$URL/healthz" && echo " - OK" || echo "Reveil lent : le serveur a ete sollicite, il sera chaud au prochain ping."
