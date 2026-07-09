@@ -20,6 +20,9 @@ if (host) {
     port,
     secure: port === 465,
     auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
+    // Force l'IPv4 : Render n'a pas de route IPv6 sortante (erreur ENETUNREACH).
+    // Passé via spread car l'option `family` n'est pas dans les types nodemailer.
+    ...({ family: 4 } as object),
   });
 }
 
