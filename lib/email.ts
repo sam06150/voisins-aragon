@@ -1,4 +1,9 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import dns from "node:dns";
+
+// Render (offre gratuite) n'a pas de route IPv6 sortante : on force la résolution
+// DNS en IPv4 d'abord, sinon l'envoi SMTP échoue avec ENETUNREACH sur une IPv6.
+dns.setDefaultResultOrder("ipv4first");
 
 const host = process.env.SMTP_HOST;
 const port = process.env.SMTP_PORT ? Number.parseInt(process.env.SMTP_PORT, 10) : 587;
