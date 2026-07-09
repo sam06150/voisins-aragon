@@ -1,9 +1,5 @@
 import nodemailer, { type Transporter } from "nodemailer";
-import dns from "node:dns";
-
-// Render (offre gratuite) n'a pas de route IPv6 sortante : on force la résolution
-// DNS en IPv4 d'abord, sinon l'envoi SMTP échoue avec ENETUNREACH sur une IPv6.
-dns.setDefaultResultOrder("ipv4first");
+import dns from "node:dns/promises";
 
 const host = process.env.SMTP_HOST;
 const port = process.env.SMTP_PORT ? Number.parseInt(process.env.SMTP_PORT, 10) : 587;
@@ -13,22 +9,40 @@ const from =
   process.env.SMTP_FROM ||
   "Collectif Aragon <no-reply@residence-aragon.local>";
 
-let transporter: Transporter | null = null;
-if (host) {
-  transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
-    // Force l'IPv4 : Render n'a pas de route IPv6 sortante (erreur ENETUNREACH).
-    // Passé via spread car l'option `family` n'est pas dans les types nodemailer.
-    ...({ family: 4 } as object),
-  });
+let transporterPromise: Promise<Transporter> | null = null;
+
+/**
+ * Crée (une seule fois) le transporteur SMTP. Render n'ayant pas de route IPv6
+ * sortante, on résout d'abord l'adresse IPv4 du serveur SMTP et on s'y connecte
+ * directement (le certificat TLS reste validé pour le vrai nom d'hôte).
+ */
+async function getTransporter(): Promise<Transporter | null> {
+  if (!host) return null;
+  if (!transporterPromise) {
+    transporterPromise = (async () => {
+      let connectHost = host;
+      try {
+        const res = await dns.lookup(host, { family: 4 });
+        if (res.address) connectHost = res.address;
+      } catch {
+        // résolution impossible : on retombe sur le nom d'hôte d'origine
+      }
+      return nodemailer.createTransport({
+        host: connectHost,
+        port,
+        secure: port === 465,
+        requireTLS: port === 587,
+        auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
+        tls: { servername: host },
+      });
+    })();
+  }
+  return transporterPromise;
 }
 
 /** Indique si un serveur SMTP est configuré (sinon on est en mode local). */
 export function emailConfigured(): boolean {
-  return transporter !== null;
+  return Boolean(host);
 }
 
 /**
@@ -43,6 +57,7 @@ export async function sendEmail(params: {
 }): Promise<void> {
   const { to, subject, html, text } = params;
 
+  const transporter = await getTransporter();
   if (!transporter) {
     console.log(
       `[e-mail non envoyé — SMTP non configuré] → ${to} · sujet : « ${subject} »`,
