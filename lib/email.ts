@@ -9,6 +9,50 @@ const from =
   process.env.SMTP_FROM ||
   "Collectif Aragon <no-reply@residence-aragon.local>";
 
+// Brevo (API HTTPS) : recommandé sur Render, qui bloque les ports SMTP sortants.
+const brevoKey = process.env.BREVO_API_KEY;
+
+/** Déduit l'expéditeur { email, name } à partir de SMTP_FROM ("Nom <email>"). */
+function parseSender(): { email: string; name?: string } {
+  const m = from.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+  if (m && m[2]) return { name: m[1] || undefined, email: m[2] };
+  return { email: smtpUser || from };
+}
+
+async function sendViaBrevo(params: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<void> {
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": brevoKey as string,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: parseSender(),
+        to: [{ email: params.to }],
+        subject: params.subject,
+        htmlContent: params.html,
+        textContent: params.text ?? params.html.replace(/<[^>]+>/g, " "),
+      }),
+    });
+    if (!res.ok) {
+      console.error(
+        "Échec de l'envoi d'un e-mail (Brevo) :",
+        res.status,
+        await res.text(),
+      );
+    }
+  } catch (err) {
+    console.error("Échec de l'envoi d'un e-mail (Brevo) :", err);
+  }
+}
+
 let transporterPromise: Promise<Transporter> | null = null;
 
 /**
@@ -40,9 +84,9 @@ async function getTransporter(): Promise<Transporter | null> {
   return transporterPromise;
 }
 
-/** Indique si un serveur SMTP est configuré (sinon on est en mode local). */
+/** Indique si l'envoi d'e-mails est configuré (Brevo ou SMTP). */
 export function emailConfigured(): boolean {
-  return Boolean(host);
+  return Boolean(brevoKey || host);
 }
 
 /**
@@ -56,6 +100,12 @@ export async function sendEmail(params: {
   text?: string;
 }): Promise<void> {
   const { to, subject, html, text } = params;
+
+  // Priorité à Brevo (API HTTPS) si configuré : fonctionne sur Render.
+  if (brevoKey) {
+    await sendViaBrevo({ to, subject, html, text });
+    return;
+  }
 
   const transporter = await getTransporter();
   if (!transporter) {
