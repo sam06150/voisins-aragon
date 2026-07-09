@@ -258,6 +258,7 @@ export async function createBuilding(formData: FormData) {
   const name = formData.get("name")?.toString().trim() ?? "";
   const code = formData.get("code")?.toString().trim().toUpperCase() ?? "";
   const address = formData.get("address")?.toString().trim() || null;
+  const residenceId = formData.get("residenceId")?.toString() || null;
   if (!name || !code) redirect("/admin/immeubles?berror=champs");
 
   const exists = await prisma.building.findFirst({
@@ -273,6 +274,7 @@ export async function createBuilding(formData: FormData) {
       address,
       latitude: coords?.lat ?? null,
       longitude: coords?.lng ?? null,
+      residenceId: residenceId || null,
     },
   });
 
@@ -283,6 +285,48 @@ export async function createBuilding(formData: FormData) {
       ? "/admin/immeubles?bwarn=geo"
       : "/admin/immeubles?bok=1",
   );
+}
+
+/** Crée une nouvelle résidence (groupe de bâtiments) ; géocode l'adresse si fournie. */
+export async function createResidence(formData: FormData) {
+  await requireManager();
+  const name = formData.get("name")?.toString().trim() ?? "";
+  const address = formData.get("address")?.toString().trim() || null;
+  if (!name) redirect("/admin/immeubles?rerror=champs");
+
+  const exists = await prisma.residence.findFirst({ where: { name } });
+  if (exists) redirect("/admin/immeubles?rerror=exists");
+
+  const coords = address ? await geocodeAddress(address) : null;
+  await prisma.residence.create({
+    data: {
+      name,
+      address,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+    },
+  });
+
+  revalidatePath("/admin/immeubles");
+  revalidatePath("/carte");
+  redirect("/admin/immeubles?resok=1");
+}
+
+/** Rattache un bâtiment à une résidence (ou l'en détache si vide). */
+export async function assignBuildingResidence(formData: FormData) {
+  await requireManager();
+  const buildingId = formData.get("buildingId")?.toString() ?? "";
+  const residenceId = formData.get("residenceId")?.toString() || null;
+  if (!buildingId) redirect("/admin/immeubles");
+
+  await prisma.building.update({
+    where: { id: buildingId },
+    data: { residenceId: residenceId || null },
+  });
+
+  revalidatePath("/admin/immeubles");
+  revalidatePath("/carte");
+  redirect("/admin/immeubles?bok=1");
 }
 
 /** Met à jour l'adresse d'un bâtiment et re-géocode ses coordonnées. */

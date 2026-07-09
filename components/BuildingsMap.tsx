@@ -8,6 +8,7 @@ export type MapBuilding = {
   address: string | null;
   latitude: number;
   longitude: number;
+  residence?: string | null;
 };
 
 export default function BuildingsMap({
@@ -73,7 +74,9 @@ export default function BuildingsMap({
         L.marker(latlng, { icon })
           .addTo(map)
           .bindPopup(
-            `<strong>${b.name}</strong>${b.address ? `<br>${b.address}` : ""}`,
+            `<strong>${b.name}</strong>` +
+              (b.residence ? `<br><em>${b.residence}</em>` : "") +
+              (b.address ? `<br>${b.address}` : ""),
           );
       }
       if (points.length > 1) {

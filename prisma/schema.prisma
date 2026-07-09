@@ -48,14 +48,27 @@ enum DocumentCategory {
   AUTRE
 }
 
-model Building {
-  id        String   @id @default(cuid())
-  name      String   @unique // "Bâtiment A"
-  code      String   @unique // "A"
-  address   String? // adresse postale (pour la carte)
-  latitude  Float? // coordonnées géographiques (géocodées depuis l'adresse)
+/** Une résidence = un groupe de bâtiments (le collectif peut en gérer plusieurs). */
+model Residence {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  address   String?
+  latitude  Float?
   longitude Float?
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
+  buildings Building[]
+}
+
+model Building {
+  id          String     @id @default(cuid())
+  name        String     @unique // "Bâtiment A"
+  code        String     @unique // "A"
+  address     String? // adresse postale (pour la carte)
+  latitude    Float? // coordonnées géographiques (géocodées depuis l'adresse)
+  longitude   Float?
+  residenceId String?
+  residence   Residence? @relation(fields: [residenceId], references: [id])
+  createdAt   DateTime   @default(now())
 
   units           Unit[]
   incidents       IncidentReport[]

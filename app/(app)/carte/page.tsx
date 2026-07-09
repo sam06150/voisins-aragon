@@ -12,7 +12,10 @@ export default async function CartePage() {
   const { t } = await getI18n();
 
   const [buildings, residenceName] = await Promise.all([
-    prisma.building.findMany({ orderBy: { code: "asc" } }),
+    prisma.building.findMany({
+      orderBy: { code: "asc" },
+      include: { residence: true },
+    }),
     getResidenceName(),
   ]);
 
@@ -21,11 +24,20 @@ export default async function CartePage() {
       b.latitude !== null && b.longitude !== null,
   );
 
+  // Regroupement de la liste par résidence.
+  const byResidence = new Map<string, typeof located>();
+  for (const b of located) {
+    const key = b.residence?.name ?? t("Sans résidence");
+    const list = byResidence.get(key) ?? [];
+    list.push(b);
+    byResidence.set(key, list);
+  }
+
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader
         title={residenceName ? `${t("Carte")} — ${residenceName}` : t("Carte des bâtiments")}
-        description={t("Les bâtiments de la résidence situés sur la carte.")}
+        description={t("Les bâtiments situés sur la carte, regroupés par résidence.")}
       />
 
       {located.length === 0 ? (
@@ -51,23 +63,31 @@ export default async function CartePage() {
             address: b.address,
             latitude: b.latitude,
             longitude: b.longitude,
+            residence: b.residence?.name ?? null,
           }))}
         />
       )}
 
       {located.length > 0 ? (
-        <Card className="mt-4">
-          <ul className="space-y-1 text-sm">
-            {located.map((b) => (
-              <li key={b.id} className="text-gray-700">
-                <span className="font-semibold">{b.name}</span>
-                {b.address ? (
-                  <span className="text-gray-500"> · {b.address}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <div className="mt-4 space-y-4">
+          {[...byResidence.entries()].map(([resName, list]) => (
+            <Card key={resName}>
+              <h2 className="mb-2 text-sm font-bold text-gray-900">
+                🏢 {resName}
+              </h2>
+              <ul className="space-y-1 text-sm">
+                {list.map((b) => (
+                  <li key={b.id} className="text-gray-700">
+                    <span className="font-semibold">{b.name}</span>
+                    {b.address ? (
+                      <span className="text-gray-500"> · {b.address}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))}
+        </div>
       ) : null}
     </div>
   );
