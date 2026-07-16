@@ -33,6 +33,7 @@ export const signupSchema = z.object({
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .max(200),
   phone: z.string().trim().max(30).optional().or(z.literal("")),
+  residenceName: z.string().trim().max(80).optional().or(z.literal("")),
   buildingId: z.string().trim().min(1, "Sélectionnez votre bâtiment"),
   unitLabel: z.string().trim().min(1, "Indiquez votre étage / appartement").max(60),
 });

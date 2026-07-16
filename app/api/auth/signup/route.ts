@@ -46,6 +46,7 @@ export async function POST(request: Request) {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone ? data.phone : null,
+        signupResidenceName: data.residenceName ? data.residenceName : null,
         signupBuildingId: data.buildingId,
         signupUnitLabel: data.unitLabel,
         status: "PENDING",

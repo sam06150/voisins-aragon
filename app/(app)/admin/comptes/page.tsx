@@ -100,7 +100,9 @@ export default async function AdminComptesPage({
                   <div className="text-right text-sm text-gray-500">
                     <div>Inscrit le {formatDate(u.createdAt)}</div>
                     <Badge className="mt-1 border-amber-200 bg-amber-50 text-amber-800">
-                      {t("Déclaré :")} {t(buildingName(u.signupBuildingId))} ·{" "}
+                      {t("Déclaré :")}{" "}
+                      {u.signupResidenceName ? `${u.signupResidenceName} · ` : ""}
+                      {t(buildingName(u.signupBuildingId))} ·{" "}
                       {u.signupUnitLabel ?? "?"}
                     </Badge>
                   </div>

@@ -113,9 +113,10 @@ model User {
   role         Role          @default(TENANT)
   status       AccountStatus @default(PENDING)
 
-  // Bâtiment/étage déclarés à l'inscription (texte libre), résolus par l'admin
-  signupBuildingId String?
-  signupUnitLabel  String?
+  // Résidence/bâtiment/étage déclarés à l'inscription (texte libre), résolus par l'admin
+  signupResidenceName String?
+  signupBuildingId    String?
+  signupUnitLabel     String?
 
   unitId String?
   unit   Unit?   @relation(fields: [unitId], references: [id])

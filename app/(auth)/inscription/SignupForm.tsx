@@ -17,6 +17,7 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
     email: "",
     password: "",
     phone: "",
+    residenceName: "",
     buildingId: "",
     unitLabel: "",
   });
@@ -104,6 +105,19 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
           required
           value={form.password}
           onChange={(e) => update("password", e.target.value)}
+        />
+      </Field>
+      <Field
+        label={t("Nom de la résidence (facultatif)")}
+        htmlFor="residenceName"
+        hint={t(
+          "Si votre résidence n'est pas encore dans la liste, indiquez son nom : un référent la créera à la validation.",
+        )}
+      >
+        <Input
+          id="residenceName"
+          value={form.residenceName}
+          onChange={(e) => update("residenceName", e.target.value)}
         />
       </Field>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
