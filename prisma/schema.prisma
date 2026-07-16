@@ -115,6 +115,7 @@ model User {
 
   // Résidence/bâtiment/étage déclarés à l'inscription (texte libre), résolus par l'admin
   signupResidenceName String?
+  signupBuildingName  String? // nom du bâtiment tapé quand il n'est pas encore listé
   signupBuildingId    String?
   signupUnitLabel     String?
 

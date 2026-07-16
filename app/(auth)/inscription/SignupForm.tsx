@@ -19,6 +19,7 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
     phone: "",
     residenceName: "",
     buildingId: "",
+    buildingName: "",
     unitLabel: "",
   });
   const [error, setError] = useState<string | null>(null);
@@ -124,11 +125,10 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
         <Field label={t("Bâtiment")} htmlFor="buildingId">
           <Select
             id="buildingId"
-            required
             value={form.buildingId}
             onChange={(e) => update("buildingId", e.target.value)}
           >
-            <option value="">{t("— Choisir —")}</option>
+            <option value="">{t("— Choisir (ou non listé) —")}</option>
             {buildings.map((b) => (
               <option key={b.id} value={b.id}>
                 {t(b.name)}
@@ -137,18 +137,29 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
           </Select>
         </Field>
         <Field
-          label={t("Étage / appartement")}
-          htmlFor="unitLabel"
-          hint={t("Ex : 3e étage, porte gauche")}
+          label={t("…ou nom du bâtiment")}
+          htmlFor="buildingName"
+          hint={t("Si votre bâtiment n'est pas encore dans la liste.")}
         >
           <Input
-            id="unitLabel"
-            required
-            value={form.unitLabel}
-            onChange={(e) => update("unitLabel", e.target.value)}
+            id="buildingName"
+            value={form.buildingName}
+            onChange={(e) => update("buildingName", e.target.value)}
           />
         </Field>
       </div>
+      <Field
+        label={t("Étage / appartement")}
+        htmlFor="unitLabel"
+        hint={t("Ex : 3e étage, porte gauche")}
+      >
+        <Input
+          id="unitLabel"
+          required
+          value={form.unitLabel}
+          onChange={(e) => update("unitLabel", e.target.value)}
+        />
+      </Field>
       <Field label={t("Téléphone (facultatif)")} htmlFor="phone">
         <Input
           id="phone"

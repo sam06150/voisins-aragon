@@ -34,9 +34,16 @@ export const signupSchema = z.object({
     .max(200),
   phone: z.string().trim().max(30).optional().or(z.literal("")),
   residenceName: z.string().trim().max(80).optional().or(z.literal("")),
-  buildingId: z.string().trim().min(1, "Sélectionnez votre bâtiment"),
+  buildingId: z.string().trim().optional().or(z.literal("")),
+  buildingName: z.string().trim().max(80).optional().or(z.literal("")),
   unitLabel: z.string().trim().min(1, "Indiquez votre étage / appartement").max(60),
-});
+}).refine(
+  (d) => Boolean(d.buildingId) || Boolean(d.buildingName),
+  {
+    message: "Sélectionnez votre bâtiment ou indiquez son nom",
+    path: ["buildingId"],
+  },
+);
 
 export const loginSchema = z.object({
   // Identifiant : e-mail (locataires) OU nom d'utilisateur (comptes internes).

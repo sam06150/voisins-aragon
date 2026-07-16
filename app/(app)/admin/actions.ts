@@ -135,36 +135,33 @@ export async function approveAccount(formData: FormData) {
   let unitId = formData.get("unitId")?.toString() || "";
   const newLabel = formData.get("newUnitLabel")?.toString().trim() || "";
   const newFloorRaw = formData.get("newFloor")?.toString().trim() || "";
+  // Bâtiment choisi explicitement par le référent (par défaut celui déclaré à
+  // l'inscription). Permet de rattacher un locataire ayant tapé son bâtiment.
+  const targetBuildingId =
+    formData.get("buildingId")?.toString() || user.signupBuildingId || "";
 
-  if (!unitId && newLabel && user.signupBuildingId) {
+  if (!unitId && newLabel && targetBuildingId) {
     const floor = Number.parseInt(newFloorRaw, 10);
     const existing = await prisma.unit.findFirst({
-      where: { buildingId: user.signupBuildingId, label: newLabel },
+      where: { buildingId: targetBuildingId, label: newLabel },
     });
-    if (existing) {
-      unitId = existing.id;
-    } else {
-      const created = await prisma.unit.create({
-        data: {
-          buildingId: user.signupBuildingId,
-          floor: Number.isNaN(floor) ? 0 : floor,
-          label: newLabel,
-        },
-      });
-      unitId = created.id;
-    }
+    unitId = existing
+      ? existing.id
+      : (
+          await prisma.unit.create({
+            data: {
+              buildingId: targetBuildingId,
+              floor: Number.isNaN(floor) ? 0 : floor,
+              label: newLabel,
+            },
+          })
+        ).id;
   }
 
-  // Sécurité : l'unité choisie doit appartenir au bâtiment d'inscription du
-  // locataire (évite de rattacher un compte à un logement d'un autre immeuble).
+  // Si une unité précise est fournie, on vérifie simplement qu'elle existe.
   if (unitId) {
     const unit = await prisma.unit.findUnique({ where: { id: unitId } });
-    if (
-      !unit ||
-      (user.signupBuildingId && unit.buildingId !== user.signupBuildingId)
-    ) {
-      redirect("/admin/comptes?error=unit");
-    }
+    if (!unit) redirect("/admin/comptes?error=unit");
   }
 
   await prisma.user.update({

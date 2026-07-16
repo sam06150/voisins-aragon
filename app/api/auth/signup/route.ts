@@ -20,11 +20,15 @@ export async function POST(request: Request) {
   }
   const data = parsed.data;
 
-  const building = await prisma.building.findUnique({
-    where: { id: data.buildingId },
-  });
-  if (!building) {
-    return NextResponse.json({ error: "Bâtiment inconnu." }, { status: 400 });
+  // Si un bâtiment existant est sélectionné, on vérifie qu'il existe.
+  // Sinon le locataire a tapé le nom de son bâtiment (résolu par l'admin).
+  if (data.buildingId) {
+    const building = await prisma.building.findUnique({
+      where: { id: data.buildingId },
+    });
+    if (!building) {
+      return NextResponse.json({ error: "Bâtiment inconnu." }, { status: 400 });
+    }
   }
 
   const existing = await prisma.user.findUnique({
@@ -47,7 +51,8 @@ export async function POST(request: Request) {
         lastName: data.lastName,
         phone: data.phone ? data.phone : null,
         signupResidenceName: data.residenceName ? data.residenceName : null,
-        signupBuildingId: data.buildingId,
+        signupBuildingName: data.buildingName ? data.buildingName : null,
+        signupBuildingId: data.buildingId ? data.buildingId : null,
         signupUnitLabel: data.unitLabel,
         status: "PENDING",
         role: "TENANT",

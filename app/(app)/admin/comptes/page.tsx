@@ -102,8 +102,10 @@ export default async function AdminComptesPage({
                     <Badge className="mt-1 border-amber-200 bg-amber-50 text-amber-800">
                       {t("Déclaré :")}{" "}
                       {u.signupResidenceName ? `${u.signupResidenceName} · ` : ""}
-                      {t(buildingName(u.signupBuildingId))} ·{" "}
-                      {u.signupUnitLabel ?? "?"}
+                      {u.signupBuildingId
+                        ? t(buildingName(u.signupBuildingId))
+                        : (u.signupBuildingName ?? "?")}{" "}
+                      · {u.signupUnitLabel ?? "?"}
                     </Badge>
                   </div>
                 </div>
@@ -116,6 +118,22 @@ export default async function AdminComptesPage({
                   <p className="mb-2 text-xs font-medium text-gray-600">
                     {t("Rattacher un logement (facultatif)")}
                   </p>
+                  <div className="mb-3">
+                    <label className="mb-1 block text-xs text-gray-500">
+                      {t("Bâtiment")}
+                    </label>
+                    <Select
+                      name="buildingId"
+                      defaultValue={u.signupBuildingId ?? ""}
+                    >
+                      <option value="">{t("— Choisir —")}</option>
+                      {buildings.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {t(b.name)}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                       <label className="mb-1 block text-xs text-gray-500">
