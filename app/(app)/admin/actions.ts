@@ -131,14 +131,46 @@ export async function approveAccount(formData: FormData) {
     redirect("/admin/comptes");
   }
 
+  // Bâtiment cible : sélection existante, sinon création à la volée (le référent
+  // peut créer le bâtiment — et sa résidence — sans passer par « Immeubles »),
+  // sinon celui déclaré à l'inscription.
+  let targetBuildingId = formData.get("buildingId")?.toString() || "";
+  const newBuildingName = formData.get("newBuildingName")?.toString().trim() || "";
+  const newBuildingCode =
+    formData.get("newBuildingCode")?.toString().trim().toUpperCase() || "";
+  const newResidenceName =
+    formData.get("newResidenceName")?.toString().trim() || "";
+
+  if (!targetBuildingId && newBuildingName && newBuildingCode) {
+    let residenceId: string | null = null;
+    if (newResidenceName) {
+      const existingRes = await prisma.residence.findFirst({
+        where: { name: newResidenceName },
+      });
+      residenceId = existingRes
+        ? existingRes.id
+        : (await prisma.residence.create({ data: { name: newResidenceName } }))
+            .id;
+    }
+    // Réutilise un bâtiment de même code ou nom s'il existe déjà (sinon le crée).
+    const existingB = await prisma.building.findFirst({
+      where: { OR: [{ code: newBuildingCode }, { name: newBuildingName }] },
+    });
+    targetBuildingId = existingB
+      ? existingB.id
+      : (
+          await prisma.building.create({
+            data: { name: newBuildingName, code: newBuildingCode, residenceId },
+          })
+        ).id;
+  }
+
+  if (!targetBuildingId) targetBuildingId = user.signupBuildingId || "";
+
   // Approbation : on résout (ou crée) l'unité de logement.
   let unitId = formData.get("unitId")?.toString() || "";
   const newLabel = formData.get("newUnitLabel")?.toString().trim() || "";
   const newFloorRaw = formData.get("newFloor")?.toString().trim() || "";
-  // Bâtiment choisi explicitement par le référent (par défaut celui déclaré à
-  // l'inscription). Permet de rattacher un locataire ayant tapé son bâtiment.
-  const targetBuildingId =
-    formData.get("buildingId")?.toString() || user.signupBuildingId || "";
 
   if (!unitId && newLabel && targetBuildingId) {
     const floor = Number.parseInt(newFloorRaw, 10);

@@ -134,6 +134,42 @@ export default async function AdminComptesPage({
                       ))}
                     </Select>
                   </div>
+                  <p className="mb-1 text-xs text-gray-500">
+                    {t(
+                      "…ou créez le bâtiment (et sa résidence) si absent de la liste :",
+                    )}
+                  </p>
+                  <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="mb-1 block text-xs text-gray-500">
+                        {t("Nouvelle résidence")}
+                      </label>
+                      <Input
+                        name="newResidenceName"
+                        placeholder={t("Nom (facultatif)")}
+                        defaultValue={u.signupResidenceName ?? ""}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-gray-500">
+                        {t("Nouveau bâtiment")}
+                      </label>
+                      <Input
+                        name="newBuildingName"
+                        placeholder={t("Nom")}
+                        defaultValue={u.signupBuildingName ?? ""}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-gray-500">
+                        {t("Code bâtiment")}
+                      </label>
+                      <Input name="newBuildingCode" placeholder={t("Ex : A")} />
+                    </div>
+                  </div>
+                  <p className="mb-1 text-xs font-medium text-gray-600">
+                    {t("Logement")}
+                  </p>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                       <label className="mb-1 block text-xs text-gray-500">
