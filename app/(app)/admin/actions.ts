@@ -141,54 +141,70 @@ export async function approveAccount(formData: FormData) {
   const newResidenceName =
     formData.get("newResidenceName")?.toString().trim() || "";
 
-  if (!targetBuildingId && newBuildingName && newBuildingCode) {
-    let residenceId: string | null = null;
-    if (newResidenceName) {
-      const existingRes = await prisma.residence.findFirst({
-        where: { name: newResidenceName },
-      });
-      residenceId = existingRes
-        ? existingRes.id
-        : (await prisma.residence.create({ data: { name: newResidenceName } }))
-            .id;
-    }
-    // Réutilise un bâtiment de même code ou nom s'il existe déjà (sinon le crée).
-    const existingB = await prisma.building.findFirst({
-      where: { OR: [{ code: newBuildingCode }, { name: newBuildingName }] },
-    });
-    targetBuildingId = existingB
-      ? existingB.id
-      : (
-          await prisma.building.create({
-            data: { name: newBuildingName, code: newBuildingCode, residenceId },
-          })
-        ).id;
+  // Un nom de bâtiment sans code ne peut pas créer le bâtiment (code unique
+  // obligatoire). On alerte le référent plutôt que de valider sans logement.
+  if (newBuildingName && !newBuildingCode) {
+    redirect("/admin/comptes?error=code");
   }
 
-  if (!targetBuildingId) targetBuildingId = user.signupBuildingId || "";
-
-  // Approbation : on résout (ou crée) l'unité de logement.
   let unitId = formData.get("unitId")?.toString() || "";
   const newLabel = formData.get("newUnitLabel")?.toString().trim() || "";
   const newFloorRaw = formData.get("newFloor")?.toString().trim() || "";
 
-  if (!unitId && newLabel && targetBuildingId) {
-    const floor = Number.parseInt(newFloorRaw, 10);
-    const existing = await prisma.unit.findFirst({
-      where: { buildingId: targetBuildingId, label: newLabel },
-    });
-    unitId = existing
-      ? existing.id
-      : (
-          await prisma.unit.create({
-            data: {
-              buildingId: targetBuildingId,
-              floor: Number.isNaN(floor) ? 0 : floor,
-              label: newLabel,
-            },
-          })
-        ).id;
+  // Création en cascade (résidence → bâtiment → unité). Les contraintes uniques
+  // (nom résidence, code/nom bâtiment, logement) peuvent lever P2002 en cas de
+  // double validation simultanée : on capture proprement (pas de redirect ici,
+  // sinon Next l'interpréterait comme une erreur avalée par le catch).
+  let conflict = false;
+  try {
+    if (!targetBuildingId && newBuildingName && newBuildingCode) {
+      let residenceId: string | null = null;
+      if (newResidenceName) {
+        const existingRes = await prisma.residence.findFirst({
+          where: { name: newResidenceName },
+        });
+        residenceId = existingRes
+          ? existingRes.id
+          : (await prisma.residence.create({ data: { name: newResidenceName } }))
+              .id;
+      }
+      // Réutilise un bâtiment de même code ou nom s'il existe (sinon le crée).
+      const existingB = await prisma.building.findFirst({
+        where: { OR: [{ code: newBuildingCode }, { name: newBuildingName }] },
+      });
+      targetBuildingId = existingB
+        ? existingB.id
+        : (
+            await prisma.building.create({
+              data: { name: newBuildingName, code: newBuildingCode, residenceId },
+            })
+          ).id;
+    }
+
+    if (!targetBuildingId) targetBuildingId = user.signupBuildingId || "";
+
+    if (!unitId && newLabel && targetBuildingId) {
+      const floor = Number.parseInt(newFloorRaw, 10);
+      const existing = await prisma.unit.findFirst({
+        where: { buildingId: targetBuildingId, label: newLabel },
+      });
+      unitId = existing
+        ? existing.id
+        : (
+            await prisma.unit.create({
+              data: {
+                buildingId: targetBuildingId,
+                floor: Number.isNaN(floor) ? 0 : floor,
+                label: newLabel,
+              },
+            })
+          ).id;
+    }
+  } catch (e) {
+    if ((e as { code?: string })?.code === "P2002") conflict = true;
+    else throw e;
   }
+  if (conflict) redirect("/admin/comptes?error=dup");
 
   // Si une unité précise est fournie, on vérifie simplement qu'elle existe.
   if (unitId) {

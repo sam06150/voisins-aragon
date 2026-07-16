@@ -30,14 +30,24 @@ export default async function AdminComptesPage({
     delerror?: string;
     suok?: string;
     suerror?: string;
+    error?: string;
   }>;
 }) {
   const admin = await requireStaff();
   const { t } = await getI18n();
   const manager = isManager(admin.role);
   const canManageRoles = isAdmin(admin.role);
-  const { pwok, pwerror, roleok, roleerror, delok, delerror, suok, suerror } =
-    await searchParams;
+  const {
+    pwok,
+    pwerror,
+    roleok,
+    roleerror,
+    delok,
+    delerror,
+    suok,
+    suerror,
+    error,
+  } = await searchParams;
 
   const notDeleted = { email: { not: { startsWith: DELETED_EMAIL_PREFIX } } };
 
@@ -76,6 +86,22 @@ export default async function AdminComptesPage({
           "Vérifiez que la personne est bien locataire de la résidence avant de valider son compte. Vous pouvez rattacher son logement au passage.",
         )}
       </p>
+
+      {error ? (
+        <div className="mb-4">
+          <Alert kind="error">
+            {error === "code"
+              ? t("Indiquez le code du nouveau bâtiment (ex : A).")
+              : error === "dup"
+                ? t(
+                    "Ce bâtiment ou cette résidence existe déjà — sélectionnez-le dans la liste.",
+                  )
+                : error === "unit"
+                  ? t("Logement introuvable.")
+                  : t("Une erreur est survenue.")}
+          </Alert>
+        </div>
+      ) : null}
 
       {pending.length === 0 ? (
         <EmptyState>{t("Aucune inscription en attente.")} 🎉</EmptyState>
