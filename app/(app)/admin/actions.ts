@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import {
   requireAdmin,
   requireManager,
-  requireStaff,
   hashPassword,
 } from "@/lib/auth";
 import { rank } from "@/lib/roles";
@@ -23,7 +22,7 @@ import { setSetting } from "@/lib/settings";
  * collectif. On ne peut supprimer qu'un compte de rôle strictement inférieur.
  */
 export async function deleteUser(formData: FormData) {
-  const actor = await requireStaff();
+  const actor = await requireManager();
   const userId = formData.get("userId")?.toString() ?? "";
   if (!userId || userId === actor.id) {
     redirect("/admin/comptes?delerror=self");
@@ -67,7 +66,7 @@ export async function deleteUser(formData: FormData) {
  * rôle strictement inférieur.
  */
 export async function suspendUser(formData: FormData) {
-  const actor = await requireStaff();
+  const actor = await requireManager();
   const userId = formData.get("userId")?.toString() ?? "";
   if (!userId || userId === actor.id) {
     redirect("/admin/comptes?suerror=self");
@@ -92,7 +91,7 @@ export async function suspendUser(formData: FormData) {
 
 /** Réactive un compte en veille (repasse en "approuvé"). */
 export async function reactivateUser(formData: FormData) {
-  const actor = await requireStaff();
+  const actor = await requireManager();
   const userId = formData.get("userId")?.toString() ?? "";
   if (!userId) redirect("/admin/comptes");
 
@@ -156,6 +155,18 @@ export async function approveAccount(formData: FormData) {
     }
   }
 
+  // Sécurité : l'unité choisie doit appartenir au bâtiment d'inscription du
+  // locataire (évite de rattacher un compte à un logement d'un autre immeuble).
+  if (unitId) {
+    const unit = await prisma.unit.findUnique({ where: { id: unitId } });
+    if (
+      !unit ||
+      (user.signupBuildingId && unit.buildingId !== user.signupBuildingId)
+    ) {
+      redirect("/admin/comptes?error=unit");
+    }
+  }
+
   await prisma.user.update({
     where: { id: userId },
     data: {
@@ -192,6 +203,16 @@ export async function resetUserPassword(formData: FormData) {
   // Un référent ne réinitialise pas son propre mot de passe ici (utiliser /compte).
   if (parsed.data.userId === admin.id) {
     redirect("/admin/comptes?pwerror=self");
+  }
+
+  // On ne peut réinitialiser que le mot de passe d'un compte de rôle
+  // strictement inférieur (sinon un sous-admin prendrait la main sur un admin).
+  const target = await prisma.user.findUnique({
+    where: { id: parsed.data.userId },
+  });
+  if (!target) redirect("/admin/comptes");
+  if (rank(admin.role) <= rank(target.role)) {
+    redirect("/admin/comptes?pwerror=rank");
   }
 
   const passwordHash = await hashPassword(parsed.data.newPassword);

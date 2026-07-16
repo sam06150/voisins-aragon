@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { loginSchema } from "@/lib/validation";
 import { verifyPassword, createSessionFor } from "@/lib/auth";
-import {
-  checkRateLimit,
-  registerFailure,
-  registerSuccess,
-} from "@/lib/rate-limit";
+import { registerAttempt, registerSuccess } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   let json: unknown;
@@ -27,7 +23,8 @@ export async function POST(request: Request) {
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   const rlKey = `${ip}:${email}`;
 
-  const rl = checkRateLimit(rlKey);
+  // On compte la tentative AVANT de vérifier le mot de passe (ferme la course).
+  const rl = registerAttempt(rlKey);
   if (!rl.allowed) {
     const minutes = Math.ceil((rl.retryAfterSec ?? 0) / 60);
     return NextResponse.json(
@@ -40,12 +37,15 @@ export async function POST(request: Request) {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    registerFailure(rlKey);
     return NextResponse.json(
       { error: "E-mail ou mot de passe incorrect." },
       { status: 401 },
     );
   }
+
+  // Mot de passe correct : ce n'est pas du brute-force, on remet le compteur à zéro
+  // (y compris pour les comptes refusés/suspendus, dont l'accès est bloqué ensuite).
+  registerSuccess(rlKey);
 
   if (user.status === "REJECTED") {
     return NextResponse.json(
@@ -67,7 +67,6 @@ export async function POST(request: Request) {
     );
   }
 
-  registerSuccess(rlKey);
   await createSessionFor(user);
   return NextResponse.json({ ok: true, status: user.status });
 }

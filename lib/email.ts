@@ -25,11 +25,12 @@ async function sendViaBrevo(params: {
   html: string;
   text?: string;
 }): Promise<void> {
+  if (!brevoKey) return; // garde : évite un en-tête "api-key: undefined"
   try {
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        "api-key": brevoKey as string,
+        "api-key": brevoKey,
         "content-type": "application/json",
         accept: "application/json",
       },

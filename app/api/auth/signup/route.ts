@@ -38,19 +38,31 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await hashPassword(data.password);
-  await prisma.user.create({
-    data: {
-      email: data.email,
-      passwordHash,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone ? data.phone : null,
-      signupBuildingId: data.buildingId,
-      signupUnitLabel: data.unitLabel,
-      status: "PENDING",
-      role: "TENANT",
-    },
-  });
+  try {
+    await prisma.user.create({
+      data: {
+        email: data.email,
+        passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone ? data.phone : null,
+        signupBuildingId: data.buildingId,
+        signupUnitLabel: data.unitLabel,
+        status: "PENDING",
+        role: "TENANT",
+      },
+    });
+  } catch (e) {
+    // Course entre deux inscriptions du même e-mail : la contrainte unique
+    // lève P2002 → on renvoie un 409 clair plutôt qu'une erreur 500.
+    if ((e as { code?: string })?.code === "P2002") {
+      return NextResponse.json(
+        { error: "Un compte existe déjà avec cet e-mail." },
+        { status: 409 },
+      );
+    }
+    throw e;
+  }
 
   return NextResponse.json({ ok: true });
 }

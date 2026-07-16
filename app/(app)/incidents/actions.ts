@@ -59,11 +59,26 @@ export async function createIncident(
     },
   });
 
-  for (const file of files) {
-    const filePath = await saveUploadedFile(file, `incidents/${incident.id}`);
-    await prisma.incidentPhoto.create({
-      data: { incidentId: incident.id, filePath, uploadedById: user.id },
+  // Si l'enregistrement d'une photo échoue (Cloudinary, disque…), on annule
+  // tout : on supprime les fichiers déjà écrits puis l'incident (pas d'orphelin).
+  try {
+    for (const file of files) {
+      const filePath = await saveUploadedFile(file, `incidents/${incident.id}`);
+      await prisma.incidentPhoto.create({
+        data: { incidentId: incident.id, filePath, uploadedById: user.id },
+      });
+    }
+  } catch {
+    const created = await prisma.incidentPhoto.findMany({
+      where: { incidentId: incident.id },
     });
+    for (const p of created) await deleteStoredFile(p.filePath);
+    await prisma.incidentReport
+      .delete({ where: { id: incident.id } })
+      .catch(() => {});
+    return {
+      error: "L'enregistrement des photos a échoué. Réessayez.",
+    };
   }
 
   revalidatePath("/incidents");
@@ -80,11 +95,18 @@ export async function toggleSupport(formData: FormData) {
   });
 
   if (existing) {
-    await prisma.incidentSupport.delete({ where: { id: existing.id } });
+    await prisma.incidentSupport
+      .delete({ where: { id: existing.id } })
+      .catch(() => {});
   } else {
-    await prisma.incidentSupport.create({
-      data: { incidentId, userId: user.id },
-    });
+    try {
+      await prisma.incidentSupport.create({
+        data: { incidentId, userId: user.id },
+      });
+    } catch (e) {
+      // P2002 = déjà soutenu (double-clic / double-soumission) : on ignore.
+      if ((e as { code?: string })?.code !== "P2002") throw e;
+    }
   }
 
   revalidatePath(`/incidents/${incidentId}`);

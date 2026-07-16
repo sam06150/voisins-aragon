@@ -21,14 +21,19 @@ export async function GET(
 
   try {
     const data = await fs.readFile(absolute);
-    return new Response(new Uint8Array(data), {
-      headers: {
-        "Content-Type": contentTypeForPath(absolute),
-        // Fichiers privés : pas de mise en cache pour que le contrôle
-        // d'accès soit réévalué à chaque requête.
-        "Cache-Control": "private, no-store",
-      },
-    });
+    const contentType = contentTypeForPath(absolute);
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      // Fichiers privés : pas de mise en cache pour que le contrôle
+      // d'accès soit réévalué à chaque requête.
+      "Cache-Control": "private, no-store",
+    };
+    // Les PDF sont forcés en téléchargement (jamais rendus inline dans l'onglet)
+    // pour éviter tout script embarqué s'exécutant dans l'origine du site.
+    if (contentType === "application/pdf") {
+      headers["Content-Disposition"] = "attachment";
+    }
+    return new Response(new Uint8Array(data), { headers });
   } catch {
     return new Response("Fichier introuvable", { status: 404 });
   }

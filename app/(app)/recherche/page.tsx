@@ -77,6 +77,7 @@ export default async function RecherchePage({
             ],
           },
           take: 8,
+          select: { id: true, firstName: true, lastName: true },
         }),
       ]);
 
@@ -136,6 +137,7 @@ export default async function RecherchePage({
           name="q"
           defaultValue={query}
           placeholder={t("Que cherchez-vous ?")}
+          aria-label={t("Recherche")}
           autoFocus
         />
         <button

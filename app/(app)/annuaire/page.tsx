@@ -25,7 +25,23 @@ export default async function AnnuairePage({
       shareInDirectory: true,
       ...(selected ? { unit: { buildingId: selected } } : {}),
     },
-    include: { unit: { include: { building: true } } },
+    // select explicite : ne jamais exposer passwordHash / champs non partagés.
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      shareEmail: true,
+      sharePhone: true,
+      unit: {
+        select: {
+          label: true,
+          floor: true,
+          building: { select: { id: true, name: true, code: true } },
+        },
+      },
+    },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
 

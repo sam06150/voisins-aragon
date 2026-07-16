@@ -88,6 +88,7 @@ export default async function ConversationPage({
             name="body"
             required
             placeholder={`${t("Écrire à")} ${partner.firstName}…`}
+            aria-label={`${t("Écrire à")} ${partner.firstName}`}
             className="min-h-16"
           />
           <Button type="submit">{t("Envoyer")}</Button>

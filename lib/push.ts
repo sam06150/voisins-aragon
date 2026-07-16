@@ -6,8 +6,8 @@ const privateKey = process.env.VAPID_PRIVATE_KEY;
 const subject = process.env.VAPID_SUBJECT || "mailto:sdsb.2023@gmail.com";
 
 const enabled = Boolean(publicKey && privateKey);
-if (enabled) {
-  webpush.setVapidDetails(subject, publicKey!, privateKey!);
+if (publicKey && privateKey) {
+  webpush.setVapidDetails(subject, publicKey, privateKey);
 }
 
 export function pushConfigured(): boolean {
@@ -30,31 +30,37 @@ export async function sendPushToUsers(
 ): Promise<void> {
   if (!enabled || userIds.length === 0) return;
 
-  const subs = await prisma.pushSubscription.findMany({
-    where: { userId: { in: userIds } },
-  });
-  if (subs.length === 0) return;
+  // Entièrement best effort : une panne DB/réseau ici ne doit jamais faire
+  // échouer l'action appelante (les notifications in-app sont déjà écrites).
+  try {
+    const subs = await prisma.pushSubscription.findMany({
+      where: { userId: { in: userIds } },
+    });
+    if (subs.length === 0) return;
 
-  const body = JSON.stringify(payload);
+    const body = JSON.stringify(payload);
 
-  await Promise.all(
-    subs.map(async (s) => {
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: s.endpoint,
-            keys: { p256dh: s.p256dh, auth: s.auth },
-          },
-          body,
-        );
-      } catch (err: unknown) {
-        const code = (err as { statusCode?: number })?.statusCode;
-        if (code === 404 || code === 410) {
-          await prisma.pushSubscription
-            .delete({ where: { id: s.id } })
-            .catch(() => {});
+    await Promise.all(
+      subs.map(async (s) => {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: s.endpoint,
+              keys: { p256dh: s.p256dh, auth: s.auth },
+            },
+            body,
+          );
+        } catch (err: unknown) {
+          const code = (err as { statusCode?: number })?.statusCode;
+          if (code === 404 || code === 410) {
+            await prisma.pushSubscription
+              .delete({ where: { id: s.id } })
+              .catch(() => {});
+          }
         }
-      }
-    }),
-  );
+      }),
+    );
+  } catch (err) {
+    console.error("Échec de l'envoi push (best effort) :", err);
+  }
 }

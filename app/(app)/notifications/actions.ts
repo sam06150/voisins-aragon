@@ -52,7 +52,12 @@ export async function markAllRead() {
 export async function openNotification(formData: FormData) {
   const user = await requireApproved();
   const id = formData.get("notificationId")?.toString() ?? "";
-  const link = formData.get("link")?.toString() || "/notifications";
+  // Le lien vient d'un champ caché contrôlable par le client : on n'autorise que
+  // les chemins internes (pas d'URL absolue ni protocol-relative "//evil.com").
+  let link = formData.get("link")?.toString() || "/notifications";
+  if (!link.startsWith("/") || link.startsWith("//")) {
+    link = "/notifications";
+  }
 
   if (id) {
     await prisma.notification.updateMany({

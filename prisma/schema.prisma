@@ -154,6 +154,9 @@ model User {
   helpOffers         HelpOffer[]
   landlordSteps      LandlordStep[]
   pushSubscriptions  PushSubscription[]
+
+  @@index([status, lastSeenAt]) // annuaire + présence "en ligne"
+  @@index([unitId]) // filtres par bâtiment/logement
 }
 
 /** Abonnement d'un appareil aux notifications push (Web Push). */
@@ -186,6 +189,10 @@ model IncidentReport {
   supports  IncidentSupport[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+
+  @@index([buildingId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model IncidentPhoto {
@@ -225,6 +232,8 @@ model ForumThread {
   posts     ForumPost[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  @@index([categoryId])
 }
 
 model ForumPost {
@@ -237,6 +246,8 @@ model ForumPost {
 
   body      String
   createdAt DateTime @default(now())
+
+  @@index([threadId])
 }
 
 model Announcement {
@@ -252,6 +263,8 @@ model Announcement {
 
   pinned    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([buildingId])
 }
 
 model Meeting {
@@ -271,6 +284,9 @@ model Meeting {
   documents Document[]
   rsvps     MeetingRSVP[]
   createdAt DateTime   @default(now())
+
+  @@index([buildingId])
+  @@index([scheduledAt])
 }
 
 model Document {
@@ -435,6 +451,7 @@ model PrivateMessage {
   createdAt   DateTime @default(now())
 
   @@index([recipientId, read])
+  @@index([senderId])
 }
 
 model HelpOffer {

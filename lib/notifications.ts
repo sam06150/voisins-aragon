@@ -75,7 +75,9 @@ export async function notifyResidents(params: {
   if (email) {
     const recipients = users.filter((u) => u.emailNotifications);
     const html = emailLayout(message, notificationEmailHtml(detail, link));
-    await Promise.all(
+    // allSettled : l'échec d'un envoi ne doit pas faire échouer les autres ni
+    // l'action appelante (les notifications in-app sont déjà créées).
+    await Promise.allSettled(
       recipients.map((u) =>
         sendEmail({ to: u.email, subject: message, html }),
       ),

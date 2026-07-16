@@ -28,7 +28,8 @@ export default async function AccueilPage() {
         where: { OR: buildingFilter },
         orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
         take: 3,
-        include: { building: true, author: true },
+        // author non utilisé à l'affichage : on ne charge pas l'objet User.
+        include: { building: true },
       }),
       prisma.incidentReport.findMany({
         orderBy: { createdAt: "desc" },
@@ -52,7 +53,12 @@ export default async function AccueilPage() {
       ]),
       prisma.user.findMany({
         where: { status: "APPROVED", lastSeenAt: { gte: onlineSince } },
-        include: { unit: { include: { building: true } } },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          unit: { select: { building: { select: { name: true } } } },
+        },
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
       }),
     ]);

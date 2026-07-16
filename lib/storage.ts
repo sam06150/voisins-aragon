@@ -15,6 +15,35 @@ export const ALLOWED_MIME: Record<string, string> = {
 
 export class UploadError extends Error {}
 
+/**
+ * Vérifie que le contenu réel du fichier (ses premiers octets) correspond au
+ * type MIME annoncé par le client (qui est falsifiable). Défense en profondeur.
+ */
+function hasValidMagicBytes(buf: Buffer, mime: string): boolean {
+  if (buf.length < 4) return false;
+  switch (mime) {
+    case "image/jpeg":
+      return buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+    case "image/png":
+      return (
+        buf[0] === 0x89 &&
+        buf[1] === 0x50 &&
+        buf[2] === 0x4e &&
+        buf[3] === 0x47
+      );
+    case "image/webp":
+      return (
+        buf.length >= 12 &&
+        buf.toString("ascii", 0, 4) === "RIFF" &&
+        buf.toString("ascii", 8, 12) === "WEBP"
+      );
+    case "application/pdf":
+      return buf.toString("ascii", 0, 5) === "%PDF-";
+    default:
+      return false;
+  }
+}
+
 // --- Stockage durable en ligne (Cloudinary), activé si les variables
 //     d'environnement sont présentes ; sinon on retombe sur le disque local. ---
 const CLOUDINARY_ENABLED = Boolean(
@@ -50,10 +79,13 @@ function sanitizeFilename(name: string): string {
   return base.slice(0, 80) || "fichier";
 }
 
-async function saveToCloudinary(file: File, safeSub: string): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const dataUri = `data:${file.type};base64,${buffer.toString("base64")}`;
-  const isPdf = file.type === "application/pdf";
+async function saveToCloudinary(
+  buffer: Buffer,
+  mime: string,
+  safeSub: string,
+): Promise<string> {
+  const dataUri = `data:${mime};base64,${buffer.toString("base64")}`;
+  const isPdf = mime === "application/pdf";
   // Les PDF sont envoyés en "raw" (livraison fiable, sans restriction PDF/ZIP) ;
   // les images en "image". On garde l'extension .pdf dans l'URL pour le navigateur.
   const result = await cloudinary.uploader.upload(dataUri, {
@@ -87,10 +119,19 @@ export async function saveUploadedFile(
     throw new UploadError("Fichier trop volumineux (10 Mo maximum).");
   }
 
+  // On lit le contenu une seule fois et on vérifie que ses octets d'en-tête
+  // correspondent bien au type annoncé (le MIME client est falsifiable).
+  const buffer = Buffer.from(await file.arrayBuffer());
+  if (!hasValidMagicBytes(buffer, file.type)) {
+    throw new UploadError(
+      "Le contenu du fichier ne correspond pas à son type (JPEG, PNG, WEBP ou PDF).",
+    );
+  }
+
   const safeSub = sanitizeSubdir(subdir);
 
   if (CLOUDINARY_ENABLED) {
-    return saveToCloudinary(file, safeSub);
+    return saveToCloudinary(buffer, file.type, safeSub);
   }
 
   const dir = path.join(UPLOADS_ROOT, safeSub);
@@ -99,7 +140,6 @@ export async function saveUploadedFile(
   const filename = `${randomUUID()}-${sanitizeFilename(file.name)}`;
   const dest = path.join(dir, filename);
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(dest, buffer);
 
   return path.posix.join(safeSub, filename);

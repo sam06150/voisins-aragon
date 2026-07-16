@@ -13,7 +13,17 @@ export default async function MessagesPage() {
     where: {
       OR: [{ senderId: user.id }, { recipientId: user.id }],
     },
-    include: { sender: true, recipient: true },
+    // On ne sélectionne que le strict nécessaire : ne jamais charger l'objet
+    // User entier (qui contient passwordHash, e-mail…) pour l'affichage.
+    select: {
+      senderId: true,
+      recipientId: true,
+      body: true,
+      read: true,
+      createdAt: true,
+      sender: { select: { id: true, firstName: true, lastName: true } },
+      recipient: { select: { id: true, firstName: true, lastName: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 

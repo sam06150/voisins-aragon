@@ -334,7 +334,9 @@ function NotifBell({ count }: { count: number }) {
     <Link
       href="/notifications"
       className="relative rounded-md p-2 text-gray-600 hover:bg-gray-100"
-      aria-label="Notifications"
+      aria-label={
+        count > 0 ? `Notifications, ${count} non lues` : "Notifications"
+      }
     >
       <svg
         width="20"

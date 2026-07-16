@@ -2,6 +2,9 @@
   "name": "residence-aragon",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20 <23"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -35,7 +38,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
-    "@types/nodemailer": "^8.0.1",
+    "@types/nodemailer": "^9.0.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -34,6 +34,43 @@ export function checkRateLimit(key: string): {
   return { allowed: true };
 }
 
+/**
+ * Enregistre une tentative ET renvoie si elle est autorisée, de façon atomique
+ * (synchrone). À appeler AVANT la vérification du mot de passe pour fermer la
+ * fenêtre de course : sinon N requêtes concurrentes passent toutes le contrôle
+ * avant qu'aucune n'incrémente le compteur.
+ *
+ * Limite : le compteur est en mémoire (non partagé entre instances Render,
+ * remis à zéro au redémarrage). Pour une protection robuste en production
+ * multi-instances, brancher un store partagé (Redis/Upstash) avec INCR atomique.
+ */
+export function registerAttempt(key: string): {
+  allowed: boolean;
+  retryAfterSec?: number;
+} {
+  const now = Date.now();
+  const entry = attempts.get(key);
+
+  if (entry && entry.blockedUntil > now) {
+    return {
+      allowed: false,
+      retryAfterSec: Math.ceil((entry.blockedUntil - now) / 1000),
+    };
+  }
+
+  if (!entry || now - entry.first > WINDOW_MS) {
+    attempts.set(key, { count: 1, first: now, blockedUntil: 0 });
+    return { allowed: true };
+  }
+
+  entry.count += 1;
+  if (entry.count > MAX_ATTEMPTS) {
+    entry.blockedUntil = now + BLOCK_MS;
+    return { allowed: false, retryAfterSec: Math.ceil(BLOCK_MS / 1000) };
+  }
+  return { allowed: true };
+}
+
 /** À appeler après un échec d'authentification. */
 export function registerFailure(key: string): void {
   const now = Date.now();
