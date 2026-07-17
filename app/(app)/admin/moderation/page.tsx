@@ -58,7 +58,7 @@ export default async function AdminModerationPage() {
                   >
                     {thread.title}
                   </Link>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-500">
                     {thread.author.firstName} {thread.author.lastName} ·{" "}
                     {thread._count.posts} {t("messages")} ·{" "}
                     {formatDateTime(thread.updatedAt)}

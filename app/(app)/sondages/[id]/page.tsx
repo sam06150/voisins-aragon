@@ -103,13 +103,13 @@ export default async function SondageDetailPage({
               );
             })}
             {!showResults ? (
-              <p className="pt-1 text-xs text-gray-400">
+              <p className="pt-1 text-xs text-gray-500">
                 {t(
                   "Cliquez sur une option pour voter. Les résultats s'affichent après votre vote.",
                 )}
               </p>
             ) : (
-              <p className="pt-1 text-xs text-gray-400">
+              <p className="pt-1 text-xs text-gray-500">
                 {t("Vous pouvez changer votre vote tant que le sondage est ouvert.")}
               </p>
             )}
@@ -141,7 +141,7 @@ export default async function SondageDetailPage({
         )}
 
         <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             {total} {t("vote(s)")} · {t("par")} {poll.author.firstName}{" "}
             {poll.author.lastName} · {formatDate(poll.createdAt)}
           </p>

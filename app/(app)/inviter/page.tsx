@@ -38,7 +38,7 @@ export default async function InviterPage() {
           <CopyLinkButton url={url} />
         </div>
 
-        <p className="mt-6 text-xs text-gray-400">
+        <p className="mt-6 text-xs text-gray-500">
           {t("Astuce : vos voisins peuvent scanner le QR code avec l'appareil photo de leur téléphone.")}
         </p>
       </Card>

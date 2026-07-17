@@ -92,7 +92,7 @@ export default async function DocumentsPage({
                 📄 {d.title}
               </a>
               <div className="mt-3 flex items-center justify-between">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-500">
                   {d.author.firstName} {d.author.lastName} · {formatDate(d.createdAt)}
                 </p>
                 {isAdmin || d.authorId === user.id ? (

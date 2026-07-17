@@ -92,7 +92,7 @@ export default async function MessagesPage() {
                     {c.lastBody}
                   </p>
                 </div>
-                <span className="shrink-0 text-xs text-gray-400">
+                <span className="shrink-0 text-xs text-gray-500">
                   {formatDateTime(c.lastAt)}
                 </span>
               </div>

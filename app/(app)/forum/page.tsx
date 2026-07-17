@@ -56,7 +56,7 @@ export default async function ForumPage() {
                 {c.description ? (
                   <p className="mt-1 text-sm text-gray-600">{t(c.description)}</p>
                 ) : null}
-                <p className="mt-3 text-xs font-medium text-gray-400">
+                <p className="mt-3 text-xs font-medium text-gray-500">
                   {c._count.threads} {t("discussion(s)")}
                 </p>
               </div>

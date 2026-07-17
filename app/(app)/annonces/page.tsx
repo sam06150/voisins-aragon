@@ -60,7 +60,7 @@ export default async function AnnoncesPage() {
               <h2 className="text-lg font-bold text-gray-900">{a.title}</h2>
               <p className="mt-2 whitespace-pre-wrap text-gray-700">{a.body}</p>
               <div className="mt-3 flex items-center justify-between">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-500">
                   {a.author.firstName} {a.author.lastName} · {formatDate(a.createdAt)}
                 </p>
                 {isAdmin ? (

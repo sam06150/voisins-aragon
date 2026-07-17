@@ -131,7 +131,7 @@ export default async function ReunionDetailPage({
                     className="text-sm font-medium text-rose-700 hover:underline"
                   >
                     📄 {d.title}{" "}
-                    <span className="text-xs font-normal text-gray-400">
+                    <span className="text-xs font-normal text-gray-500">
                       ({t(documentCategoryLabels[d.category])})
                     </span>
                   </a>
@@ -168,7 +168,7 @@ export default async function ReunionDetailPage({
           </div>
         </div>
 
-        <p className="mt-5 border-t border-gray-100 pt-4 text-xs text-gray-400">
+        <p className="mt-5 border-t border-gray-100 pt-4 text-xs text-gray-500">
           {t("Créée par")} {meeting.author.firstName} {meeting.author.lastName}
         </p>
       </Card>

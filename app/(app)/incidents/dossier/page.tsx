@@ -107,7 +107,7 @@ export default async function DossierPage({
                 <p className="mt-2 whitespace-pre-wrap text-gray-800">
                   {i.description}
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-500">
                   {t("Signalé par")} {i.author.firstName} {i.author.lastName}
                 </p>
                 {i.photos.filter((p) => !p.filePath.endsWith(".pdf")).length >

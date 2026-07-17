@@ -110,7 +110,7 @@ export default async function AnnuairePage({
             <section key={g.buildingName}>
               <h2 className="mb-3 text-lg font-bold text-gray-900">
                 {t(g.buildingName)}
-                <span className="ml-2 text-sm font-normal text-gray-400">
+                <span className="ml-2 text-sm font-normal text-gray-500">
                   {g.residents.length} {t("voisin(s)")}
                 </span>
               </h2>
@@ -143,7 +143,7 @@ export default async function AnnuairePage({
                         </a>
                       ) : null}
                       {!r.shareEmail && !(r.sharePhone && r.phone) ? (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-500">
                           {t("Coordonnées non partagées")}
                         </span>
                       ) : null}

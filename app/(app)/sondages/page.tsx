@@ -54,7 +54,7 @@ export default async function SondagesPage() {
                   </Badge>
                 </div>
                 <h3 className="font-semibold text-gray-900">{p.question}</h3>
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-gray-500">
                   {p._count.votes} {t("vote(s)")} · {t("par")}{" "}
                   {p.author.firstName} {p.author.lastName} · {formatDate(p.createdAt)}
                 </p>

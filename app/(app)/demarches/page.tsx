@@ -60,7 +60,7 @@ export default async function DemarchesPage() {
                   <Badge className="border-gray-200 bg-gray-50 text-gray-600">
                     {s.building ? t(s.building.name) : t("Toutes résidences")}
                   </Badge>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-500">
                     {formatDate(s.occurredAt)}
                   </span>
                 </div>

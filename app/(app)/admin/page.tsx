@@ -90,7 +90,7 @@ export default async function AdminDashboardPage() {
                       <div className="font-medium text-gray-900">
                         {u.firstName} {u.lastName}
                       </div>
-                      <div className="text-xs text-gray-400">{u.email}</div>
+                      <div className="text-xs text-gray-500">{u.email}</div>
                     </div>
                     <Badge className="border-amber-200 bg-amber-50 text-amber-800">
                       {t("En attente")}
@@ -123,7 +123,7 @@ export default async function AdminDashboardPage() {
                         {t(incidentStatusLabels[i.status])}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500">
                       {i.building.name} · {formatDateTime(i.createdAt)}
                     </p>
                   </Card>

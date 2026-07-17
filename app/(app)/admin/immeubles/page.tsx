@@ -161,7 +161,7 @@ export default async function AdminImmeublesPage({
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-xs text-gray-400">
+          <p className="mt-3 text-xs text-gray-500">
             {t("Aucune résidence pour l'instant.")}
           </p>
         )}
@@ -236,7 +236,7 @@ export default async function AdminImmeublesPage({
         <section key={g.key} className="mb-8">
           <h3 className="mb-3 text-lg font-bold text-gray-900">
             🏢 {g.title}
-            <span className="ml-2 text-sm font-normal text-gray-400">
+            <span className="ml-2 text-sm font-normal text-gray-500">
               {g.buildings.length} {t("bâtiment(s)")}
             </span>
           </h3>
@@ -245,7 +245,7 @@ export default async function AdminImmeublesPage({
               <Card key={b.id}>
                 <h4 className="font-bold text-gray-900">
                   {t(b.name)}
-                  <span className="ml-2 text-sm font-normal text-gray-400">
+                  <span className="ml-2 text-sm font-normal text-gray-500">
                     {b._count.units} {t("logement(s)")}
                   </span>
                   {b.latitude && b.longitude ? (
@@ -308,7 +308,7 @@ export default async function AdminImmeublesPage({
                 </Link>
 
                 {b.units.length === 0 ? (
-                  <p className="mt-3 text-sm text-gray-400">
+                  <p className="mt-3 text-sm text-gray-500">
                     {t("Aucun logement enregistré.")}
                   </p>
                 ) : (

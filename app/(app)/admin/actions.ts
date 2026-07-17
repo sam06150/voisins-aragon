@@ -114,6 +114,47 @@ export async function reactivateUser(formData: FormData) {
   redirect("/admin/comptes?suok=1");
 }
 
+/** Résout (ou crée) une résidence par son nom. Renvoie null si nom vide. */
+async function resolveResidenceId(name: string): Promise<string | null> {
+  if (!name) return null;
+  const existing = await prisma.residence.findFirst({ where: { name } });
+  return existing
+    ? existing.id
+    : (await prisma.residence.create({ data: { name } })).id;
+}
+
+/** Réutilise un bâtiment de même code ou nom s'il existe, sinon le crée. */
+async function findOrCreateBuilding(
+  name: string,
+  code: string,
+  residenceId: string | null,
+): Promise<string> {
+  const existing = await prisma.building.findFirst({
+    where: { OR: [{ code }, { name }] },
+  });
+  return existing
+    ? existing.id
+    : (await prisma.building.create({ data: { name, code, residenceId } })).id;
+}
+
+/** Réutilise un logement (bâtiment + libellé) s'il existe, sinon le crée. */
+async function findOrCreateUnit(
+  buildingId: string,
+  label: string,
+  floorRaw: string,
+): Promise<string> {
+  const existing = await prisma.unit.findFirst({
+    where: { buildingId, label },
+  });
+  if (existing) return existing.id;
+  const floor = Number.parseInt(floorRaw, 10);
+  return (
+    await prisma.unit.create({
+      data: { buildingId, floor: Number.isNaN(floor) ? 0 : floor, label },
+    })
+  ).id;
+}
+
 export async function approveAccount(formData: FormData) {
   await requireManager();
 
@@ -160,47 +201,18 @@ export async function approveAccount(formData: FormData) {
   let conflict = false;
   try {
     if (!targetBuildingId && newBuildingName && newBuildingCode) {
-      let residenceId: string | null = null;
-      if (newResidenceName) {
-        const existingRes = await prisma.residence.findFirst({
-          where: { name: newResidenceName },
-        });
-        residenceId = existingRes
-          ? existingRes.id
-          : (await prisma.residence.create({ data: { name: newResidenceName } }))
-              .id;
-      }
-      // Réutilise un bâtiment de même code ou nom s'il existe (sinon le crée).
-      const existingB = await prisma.building.findFirst({
-        where: { OR: [{ code: newBuildingCode }, { name: newBuildingName }] },
-      });
-      targetBuildingId = existingB
-        ? existingB.id
-        : (
-            await prisma.building.create({
-              data: { name: newBuildingName, code: newBuildingCode, residenceId },
-            })
-          ).id;
+      const residenceId = await resolveResidenceId(newResidenceName);
+      targetBuildingId = await findOrCreateBuilding(
+        newBuildingName,
+        newBuildingCode,
+        residenceId,
+      );
     }
 
     if (!targetBuildingId) targetBuildingId = user.signupBuildingId || "";
 
     if (!unitId && newLabel && targetBuildingId) {
-      const floor = Number.parseInt(newFloorRaw, 10);
-      const existing = await prisma.unit.findFirst({
-        where: { buildingId: targetBuildingId, label: newLabel },
-      });
-      unitId = existing
-        ? existing.id
-        : (
-            await prisma.unit.create({
-              data: {
-                buildingId: targetBuildingId,
-                floor: Number.isNaN(floor) ? 0 : floor,
-                label: newLabel,
-              },
-            })
-          ).id;
+      unitId = await findOrCreateUnit(targetBuildingId, newLabel, newFloorRaw);
     }
   } catch (e) {
     if ((e as { code?: string })?.code === "P2002") conflict = true;

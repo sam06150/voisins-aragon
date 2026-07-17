@@ -25,7 +25,7 @@ export default function PasswordInput({
         onClick={() => setShow((s) => !s)}
         tabIndex={-1}
         aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-        className="absolute inset-y-0 right-0 flex items-center px-3 text-lg text-gray-400 hover:text-gray-700"
+        className="absolute inset-y-0 right-0 flex items-center px-3 text-lg text-gray-500 hover:text-gray-700"
       >
         {show ? "🙈" : "👁️"}
       </button>

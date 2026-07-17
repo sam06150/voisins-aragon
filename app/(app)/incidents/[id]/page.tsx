@@ -124,7 +124,7 @@ export default async function IncidentDetailPage({
         ) : null}
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             {t("Signalé par")} {incident.author.firstName}{" "}
             {incident.author.lastName} · {formatDateTime(incident.createdAt)}
           </p>

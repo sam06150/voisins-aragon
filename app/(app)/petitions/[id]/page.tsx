@@ -132,7 +132,7 @@ export default async function PetitionDetailPage({
         )}
 
         <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             {t("Lancée par")} {petition.author.firstName}{" "}
             {petition.author.lastName} · {formatDate(petition.createdAt)}
           </p>
@@ -177,7 +177,7 @@ export default async function PetitionDetailPage({
               <span className="font-medium text-gray-900">
                 {s.user.firstName} {s.user.lastName}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-500">
                 {formatDate(s.createdAt)}
               </span>
             </div>

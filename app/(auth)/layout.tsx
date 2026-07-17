@@ -23,7 +23,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
         {children}
 
         {/* Accès discret : administration + contact */}
-        <footer className="mt-8 flex items-center justify-center gap-3 text-xs text-gray-400">
+        <footer className="mt-8 flex items-center justify-center gap-3 text-xs text-gray-500">
           <Link
             href="/connexion?admin=1"
             className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white/60 px-2.5 py-1 font-medium text-gray-500 transition hover:border-gray-300 hover:text-gray-700"
@@ -38,7 +38,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
             {t("Me contacter")}
           </a>
         </footer>
-        <div className="mt-2 flex items-center justify-center gap-3 text-xs text-gray-400">
+        <div className="mt-2 flex items-center justify-center gap-3 text-xs text-gray-500">
           <Link
             href="/confidentialite"
             className="transition hover:text-gray-600 hover:underline"

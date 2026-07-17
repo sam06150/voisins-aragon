@@ -82,7 +82,7 @@ export default async function CategoryPage({
                       {thread.title}
                     </h3>
                   </div>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-500">
                     {t("Par")} {thread.author.firstName} {thread.author.lastName}{" "}
                     · {t("dernière activité")} {formatDateTime(thread.updatedAt)}
                   </p>
@@ -91,7 +91,7 @@ export default async function CategoryPage({
                   <div className="text-lg font-bold text-gray-800">
                     {thread._count.posts}
                   </div>
-                  <div className="text-[11px] text-gray-400">{t("messages")}</div>
+                  <div className="text-[11px] text-gray-500">{t("messages")}</div>
                 </div>
               </div>
             </Link>

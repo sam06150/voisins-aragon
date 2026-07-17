@@ -131,7 +131,7 @@ export default async function IncidentsPage({
                 <p className="mt-1 line-clamp-2 text-sm text-gray-600">
                   {i.description}
                 </p>
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-gray-500">
                   {t("Par")} {i.author.firstName} {i.author.lastName} ·{" "}
                   {formatDateTime(i.createdAt)}
                 </p>

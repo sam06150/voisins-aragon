@@ -78,7 +78,7 @@ export default function NavBar({
             {t("Voisins")}{" "}
             <span className="text-gray-800">{t("& en Colère")}</span>
           </span>
-          <span className="text-[11px] font-medium text-gray-400">
+          <span className="text-[11px] font-medium text-gray-500">
             {residenceName || t("Collectif des locataires")}
           </span>
         </Link>
@@ -237,7 +237,7 @@ export default function NavBar({
 
           {GROUPS.map((g) => (
             <div key={g.label} className="mt-3">
-              <div className="px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <div className="px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                 {t(g.label)}
               </div>
               <div className="mt-1 flex flex-col gap-1">

@@ -96,7 +96,7 @@ export default async function AccueilPage() {
           <h2 className="text-lg font-bold text-gray-900">
             {t("Voisins en ligne")}
           </h2>
-          <span className="text-sm font-normal text-gray-400">
+          <span className="text-sm font-normal text-gray-500">
             ({onlineUsers.length})
           </span>
         </div>
@@ -115,7 +115,7 @@ export default async function AccueilPage() {
                   {u.lastName ? ` ${u.lastName.charAt(0).toUpperCase()}.` : ""}
                   {u.id === user.id ? ` (${t("vous")})` : ""}
                 </span>
-                <span className="text-gray-400">
+                <span className="text-gray-500">
                   ·{" "}
                   {u.unit ? t(u.unit.building.name) : t("Bâtiment non renseigné")}
                 </span>
@@ -156,7 +156,7 @@ export default async function AccueilPage() {
                   <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-gray-600">
                     {a.body}
                   </p>
-                  <p className="mt-2 text-xs text-gray-400">
+                  <p className="mt-2 text-xs text-gray-500">
                     {formatDate(a.createdAt)}
                   </p>
                 </Card>
@@ -196,7 +196,7 @@ export default async function AccueilPage() {
                       </Badge>
                     </div>
                     <h3 className="font-semibold text-gray-900">{i.title}</h3>
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500">
                       {formatDateTime(i.createdAt)}
                     </p>
                   </Card>
@@ -219,7 +219,7 @@ export default async function AccueilPage() {
                 🗓️ {formatDateTime(nextMeeting.scheduledAt)}
                 {nextMeeting.location ? ` · 📍 ${nextMeeting.location}` : ""}
               </p>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-gray-500">
                 {nextMeeting.building
                   ? nextMeeting.building.name
                   : "Toutes résidences"}

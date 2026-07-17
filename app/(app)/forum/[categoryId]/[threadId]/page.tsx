@@ -113,7 +113,7 @@ export default async function ThreadPage({
                 ) : null}
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-500">
                   {formatDateTime(p.createdAt)}
                 </span>
                 {isAdmin && thread.posts.length > 1 ? (

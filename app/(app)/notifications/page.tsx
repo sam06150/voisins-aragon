@@ -86,7 +86,7 @@ export default async function NotificationsPage() {
                   <span className="block text-sm text-gray-800">
                     {n.message}
                   </span>
-                  <span className="mt-1 block text-xs text-gray-400">
+                  <span className="mt-1 block text-xs text-gray-500">
                     {formatDateTime(n.createdAt)}
                   </span>
                 </span>

@@ -68,7 +68,7 @@ export default async function ConversationPage({
                 <p className="whitespace-pre-wrap">{m.body}</p>
                 <p
                   className={`mt-1 text-[10px] ${
-                    mine ? "text-rose-100" : "text-gray-400"
+                    mine ? "text-rose-100" : "text-gray-500"
                   }`}
                 >
                   {formatDateTime(m.createdAt)}

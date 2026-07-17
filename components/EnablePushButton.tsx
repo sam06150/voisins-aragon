@@ -73,7 +73,7 @@ export default function EnablePushButton() {
   if (state === "loading") return null;
   if (state === "unsupported") {
     return (
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-500">
         {t("Les notifications push ne sont pas disponibles sur ce navigateur. Sur iPhone, ajoutez d'abord l'appli à l'écran d'accueil.")}
       </p>
     );

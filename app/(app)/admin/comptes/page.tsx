@@ -336,7 +336,7 @@ export default async function AdminComptesPage({
                   <div className="font-medium text-gray-900">
                     {u.firstName} {u.lastName}
                   </div>
-                  <div className="text-xs text-gray-400">{u.email}</div>
+                  <div className="text-xs text-gray-500">{u.email}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     {u.status === "APPROVED" ? (
                       <Badge className="border-green-200 bg-green-50 text-green-700">
