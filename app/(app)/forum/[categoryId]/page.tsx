@@ -24,7 +24,7 @@ export default async function CategoryPage({
   const threads = await prisma.forumThread.findMany({
     where: { categoryId },
     include: {
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       _count: { select: { posts: true } },
     },
     orderBy: [{ isPinned: "desc" }, { updatedAt: "desc" }],

@@ -32,6 +32,9 @@ export default async function AccueilPage() {
         include: { building: true },
       }),
       prisma.incidentReport.findMany({
+        // Scoping : on ne montre que les signalements du bâtiment de l'utilisateur
+        // (évite d'exposer ceux des autres résidences sur le tableau de bord).
+        where: buildingId ? { buildingId } : {},
         orderBy: { createdAt: "desc" },
         take: 5,
         include: { building: true },

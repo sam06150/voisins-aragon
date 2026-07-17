@@ -12,7 +12,7 @@ export default async function PetitionsPage() {
   const petitions = await prisma.petition.findMany({
     include: {
       building: true,
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       _count: { select: { signatures: true } },
     },
     orderBy: [{ closed: "asc" }, { createdAt: "desc" }],

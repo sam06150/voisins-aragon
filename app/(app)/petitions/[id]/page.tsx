@@ -27,9 +27,11 @@ export default async function PetitionDetailPage({
     where: { id },
     include: {
       building: true,
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       signatures: {
-        include: { user: true },
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true } },
+        },
         orderBy: { createdAt: "desc" },
       },
     },

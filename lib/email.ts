@@ -132,6 +132,16 @@ export async function sendEmail(params: {
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
+/** Échappe les caractères HTML d'une donnée utilisateur avant interpolation. */
+export function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /** Gabarit HTML minimal et sobre, cohérent avec la marque du collectif. */
 export function emailLayout(title: string, bodyHtml: string): string {
   return `

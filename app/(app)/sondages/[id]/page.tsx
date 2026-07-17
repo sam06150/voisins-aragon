@@ -22,7 +22,7 @@ export default async function SondageDetailPage({
     where: { id },
     include: {
       building: true,
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       options: {
         include: { _count: { select: { votes: true } } },
       },

@@ -15,7 +15,10 @@ export default async function DemarchesPage() {
 
   const [steps, buildings] = await Promise.all([
     prisma.landlordStep.findMany({
-      include: { building: true, author: true },
+      include: {
+        building: true,
+        author: { select: { id: true, firstName: true, lastName: true } },
+      },
       orderBy: { occurredAt: "desc" },
     }),
     prisma.building.findMany({

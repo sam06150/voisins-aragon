@@ -29,6 +29,15 @@ export async function createDocument(
   }
   const data = parsed.data;
 
+  // La réunion liée doit exister (sinon insertion FK P2003 → 500). Vérifié avant
+  // l'upload pour ne pas laisser de fichier orphelin.
+  if (data.meetingId) {
+    const meeting = await prisma.meeting.findUnique({
+      where: { id: data.meetingId },
+    });
+    if (!meeting) return { error: "Réunion introuvable." };
+  }
+
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Veuillez sélectionner un fichier." };

@@ -21,7 +21,10 @@ export default async function AnnoncesPage() {
   const announcements = await prisma.announcement.findMany({
     where: isAdmin ? {} : { OR: buildingFilter },
     orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
-    include: { building: true, author: true },
+    include: {
+      building: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
+    },
   });
 
   return (

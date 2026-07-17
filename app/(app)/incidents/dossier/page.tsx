@@ -29,7 +29,12 @@ export default async function DossierPage({
 
   const incidents = await prisma.incidentReport.findMany({
     where: selected ? { buildingId: selected } : {},
-    include: { building: true, unit: true, author: true, photos: true },
+    include: {
+      building: true,
+      unit: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
+      photos: true,
+    },
     orderBy: { createdAt: "asc" },
   });
 

@@ -28,7 +28,10 @@ export default async function DocumentsPage({
 
   const documents = await prisma.document.findMany({
     where: categoryFilter ? { category: categoryFilter } : {},
-    include: { building: true, author: true },
+    include: {
+      building: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 

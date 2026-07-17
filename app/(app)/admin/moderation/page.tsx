@@ -13,7 +13,7 @@ export default async function AdminModerationPage() {
 
   const threads = await prisma.forumThread.findMany({
     include: {
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       category: { include: { building: true } },
       _count: { select: { posts: true } },
     },

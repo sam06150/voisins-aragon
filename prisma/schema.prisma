@@ -170,6 +170,8 @@ model PushSubscription {
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
+
+  @@index([userId]) // fan-out des notifications push
 }
 
 model IncidentReport {
@@ -207,6 +209,8 @@ model IncidentPhoto {
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([incidentId])
 }
 
 model ForumCategory {
@@ -307,6 +311,8 @@ model Document {
   author   User   @relation(fields: [authorId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([meetingId])
 }
 
 // ---------------------------------------------------------------------------
@@ -354,6 +360,7 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([userId, read])
+  @@index([userId, createdAt]) // liste des notifications triée par date
 }
 
 model Petition {
@@ -404,6 +411,8 @@ model PollOption {
   label  String
 
   votes PollVote[]
+
+  @@index([pollId])
 }
 
 model PollVote {
@@ -417,6 +426,7 @@ model PollVote {
   createdAt DateTime   @default(now())
 
   @@unique([pollId, userId])
+  @@index([optionId])
 }
 
 model IncidentSupport {
@@ -467,6 +477,8 @@ model HelpOffer {
   author      User      @relation(fields: [authorId], references: [id])
   resolved    Boolean   @default(false)
   createdAt   DateTime  @default(now())
+
+  @@index([resolved, createdAt])
 }
 
 model LandlordStep {
@@ -480,4 +492,6 @@ model LandlordStep {
   authorId    String
   author      User             @relation(fields: [authorId], references: [id])
   createdAt   DateTime         @default(now())
+
+  @@index([occurredAt])
 }

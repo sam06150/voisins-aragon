@@ -86,6 +86,13 @@ export async function setRsvp(formData: FormData) {
   });
   if (!parsed.success) redirect("/reunions");
 
+  // La réunion doit exister (sinon l'upsert lève une erreur de clé étrangère
+  // P2003 → 500) : cas d'un meetingId forgé ou d'une réunion supprimée entre-temps.
+  const meeting = await prisma.meeting.findUnique({
+    where: { id: parsed.data.meetingId },
+  });
+  if (!meeting) redirect("/reunions");
+
   await prisma.meetingRSVP.upsert({
     where: {
       meetingId_userId: {

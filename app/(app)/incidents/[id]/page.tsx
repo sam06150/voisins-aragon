@@ -33,7 +33,7 @@ export default async function IncidentDetailPage({
     include: {
       building: true,
       unit: true,
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       photos: true,
       supports: true,
     },

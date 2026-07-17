@@ -11,7 +11,7 @@ import {
 import { rank } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 import { adminResetPasswordSchema, promoteSchema } from "@/lib/validation";
-import { sendEmail, emailLayout } from "@/lib/email";
+import { sendEmail, emailLayout, escapeHtml } from "@/lib/email";
 import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
 import { geocodeAddress } from "@/lib/geocode";
 import { setSetting } from "@/lib/settings";
@@ -225,7 +225,7 @@ export async function approveAccount(formData: FormData) {
     subject: "Votre compte a été validé",
     html: emailLayout(
       "Bienvenue dans le collectif !",
-      `<p>Bonjour ${user.firstName},</p><p>Votre compte sur la plateforme des Voisins Collectif et en Colère a été validé par un référent. Vous pouvez désormais vous connecter et participer.</p>`,
+      `<p>Bonjour ${escapeHtml(user.firstName)},</p><p>Votre compte sur la plateforme des Voisins Collectif et en Colère a été validé par un référent. Vous pouvez désormais vous connecter et participer.</p>`,
     ),
   });
 

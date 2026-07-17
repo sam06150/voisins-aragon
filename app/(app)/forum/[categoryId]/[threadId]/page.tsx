@@ -30,10 +30,12 @@ export default async function ThreadPage({
   const thread = await prisma.forumThread.findUnique({
     where: { id: threadId },
     include: {
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       category: { include: { building: true } },
       posts: {
-        include: { author: true },
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true } },
+        },
         orderBy: { createdAt: "asc" },
       },
     },

@@ -42,7 +42,7 @@ export default async function IncidentsPage({
     include: {
       building: true,
       unit: true,
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       _count: { select: { photos: true } },
     },
     orderBy: { createdAt: "desc" },

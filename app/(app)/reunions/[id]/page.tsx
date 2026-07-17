@@ -31,7 +31,7 @@ export default async function ReunionDetailPage({
     where: { id },
     include: {
       building: true,
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       documents: true,
       rsvps: true,
     },

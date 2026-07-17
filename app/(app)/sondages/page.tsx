@@ -12,7 +12,7 @@ export default async function SondagesPage() {
   const polls = await prisma.poll.findMany({
     include: {
       building: true,
-      author: true,
+      author: { select: { id: true, firstName: true, lastName: true } },
       _count: { select: { votes: true } },
     },
     orderBy: [{ closed: "asc" }, { createdAt: "desc" }],

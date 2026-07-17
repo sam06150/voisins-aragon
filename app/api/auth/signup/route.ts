@@ -2,8 +2,24 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { signupSchema } from "@/lib/validation";
 import { hashPassword } from "@/lib/auth";
+import { registerAttempt } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  // Anti-abus : l'inscription est publique et déclenche un hashPassword coûteux.
+  // On limite le nombre de tentatives par IP pour éviter la création en masse.
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const rl = registerAttempt(`signup:${ip}`);
+  if (!rl.allowed) {
+    const minutes = Math.ceil((rl.retryAfterSec ?? 0) / 60);
+    return NextResponse.json(
+      {
+        error: `Trop de tentatives. Réessayez dans environ ${minutes} minute(s).`,
+      },
+      { status: 429 },
+    );
+  }
+
   let json: unknown;
   try {
     json = await request.json();

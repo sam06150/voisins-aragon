@@ -55,7 +55,10 @@ export async function createPetition(
 export async function signPetition(formData: FormData) {
   const user = await requireApproved();
   const petitionId = formData.get("petitionId")?.toString() ?? "";
-  const comment = formData.get("comment")?.toString().trim() || null;
+  // Commentaire borné (champ libre non passé par un schéma Zod) : on limite la
+  // taille stockée/affichée pour éviter tout abus.
+  const rawComment = formData.get("comment")?.toString().trim() || "";
+  const comment = rawComment ? rawComment.slice(0, 2000) : null;
   if (!petitionId) redirect("/petitions");
 
   const petition = await prisma.petition.findUnique({

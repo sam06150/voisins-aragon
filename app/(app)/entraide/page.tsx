@@ -24,7 +24,10 @@ export default async function EntraidePage({
   const [offers, buildings] = await Promise.all([
     prisma.helpOffer.findMany({
       where: typeFilter ? { type: typeFilter } : {},
-      include: { building: true, author: true },
+      include: {
+        building: true,
+        author: { select: { id: true, firstName: true, lastName: true } },
+      },
       orderBy: [{ resolved: "asc" }, { createdAt: "desc" }],
     }),
     prisma.building.findMany({
