@@ -37,6 +37,9 @@ export const signupSchema = z.object({
   buildingId: z.string().trim().optional().or(z.literal("")),
   buildingName: z.string().trim().max(80).optional().or(z.literal("")),
   unitLabel: z.string().trim().min(1, "Indiquez votre étage / appartement").max(60),
+  consent: z.literal(true, {
+    message: "Vous devez accepter la politique de confidentialité",
+  }),
 }).refine(
   (d) => Boolean(d.buildingId) || Boolean(d.buildingName),
   {

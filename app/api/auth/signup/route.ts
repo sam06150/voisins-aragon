@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         signupBuildingName: data.buildingName ? data.buildingName : null,
         signupBuildingId: data.buildingId ? data.buildingId : null,
         signupUnitLabel: data.unitLabel,
+        consentAt: new Date(),
         status: "PENDING",
         role: "TENANT",
       },

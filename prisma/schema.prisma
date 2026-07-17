@@ -133,6 +133,9 @@ model User {
   // Horodatage de dernière activité (présence "en ligne")
   lastSeenAt DateTime?
 
+  // Horodatage d'acceptation de la politique de confidentialité (RGPD).
+  consentAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -1,19 +1,20 @@
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { Alert, Button, Card, PageHeader } from "@/components/ui";
+import ConfirmButton from "@/components/ConfirmButton";
 import { emailConfigured } from "@/lib/email";
 import { roleLabels } from "@/lib/labels";
 import ChangePasswordForm from "./ChangePasswordForm";
-import { updateEmailPref } from "./actions";
+import { updateEmailPref, deleteMyAccount } from "./actions";
 
 export default async function ComptePage({
   searchParams,
 }: {
-  searchParams: Promise<{ prefok?: string }>;
+  searchParams: Promise<{ prefok?: string; delerror?: string }>;
 }) {
   const user = await requireApproved();
   const { t } = await getI18n();
-  const { prefok } = await searchParams;
+  const { prefok, delerror } = await searchParams;
   const smtpReady = emailConfigured();
 
   return (
@@ -94,11 +95,49 @@ export default async function ComptePage({
         </form>
       </Card>
 
-      <Card>
+      <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-gray-800">
           {t("Changer mon mot de passe")}
         </h2>
         <ChangePasswordForm />
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-sm font-semibold text-gray-800">
+          {t("Mes données personnelles")}
+        </h2>
+        {delerror === "lastadmin" ? (
+          <div className="mb-3">
+            <Alert kind="error">
+              {t(
+                "Vous êtes le dernier administrateur : nommez un autre référent avant de supprimer votre compte.",
+              )}
+            </Alert>
+          </div>
+        ) : null}
+        <p className="mb-3 text-sm text-gray-600">
+          {t(
+            "Vous pouvez exporter une copie de vos données, ou supprimer définitivement votre compte.",
+          )}
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="/api/compte/export"
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+          >
+            ⬇️ {t("Exporter mes données")}
+          </a>
+          <form action={deleteMyAccount}>
+            <ConfirmButton
+              variant="danger"
+              confirmMessage={t(
+                "Supprimer définitivement votre compte ? Vos données personnelles et votre accès seront effacés (vos contributions resteront anonymes). Cette action est irréversible.",
+              )}
+            >
+              {t("Supprimer mon compte")}
+            </ConfirmButton>
+          </form>
+        </div>
       </Card>
     </div>
   );

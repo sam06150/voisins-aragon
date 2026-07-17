@@ -38,6 +38,21 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
             {t("Me contacter")}
           </a>
         </footer>
+        <div className="mt-2 flex items-center justify-center gap-3 text-xs text-gray-400">
+          <Link
+            href="/confidentialite"
+            className="transition hover:text-gray-600 hover:underline"
+          >
+            {t("Confidentialité")}
+          </Link>
+          <span aria-hidden>·</span>
+          <Link
+            href="/mentions-legales"
+            className="transition hover:text-gray-600 hover:underline"
+          >
+            {t("Mentions légales")}
+          </Link>
+        </div>
       </div>
     </div>
   );

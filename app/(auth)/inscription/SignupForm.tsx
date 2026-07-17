@@ -22,6 +22,7 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
     buildingName: "",
     unitLabel: "",
   });
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,7 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, consent }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -168,7 +169,32 @@ export default function SignupForm({ buildings }: { buildings: Building[] }) {
           onChange={(e) => update("phone", e.target.value)}
         />
       </Field>
-      <Button type="submit" disabled={loading} className="w-full">
+      <label className="flex items-start gap-2 text-sm text-gray-600">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+        />
+        <span>
+          {t("J'ai lu et j'accepte la")}{" "}
+          <a
+            href="/confidentialite"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-rose-700 hover:underline"
+          >
+            {t("politique de confidentialité")}
+          </a>
+          .
+        </span>
+      </label>
+
+      <Button
+        type="submit"
+        disabled={loading || !consent}
+        className="w-full"
+      >
         {loading ? t("Envoi…") : t("Créer mon compte")}
       </Button>
     </form>

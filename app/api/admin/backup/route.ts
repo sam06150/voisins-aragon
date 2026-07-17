@@ -5,8 +5,10 @@ import { prisma } from "@/lib/db";
  * Sauvegarde complète de la base au format JSON (toutes les tables).
  * Portable : fonctionne aussi bien sur Postgres/Neon (production) que sur
  * SQLite (dev local), sans binaire externe (pg_dump). Réservé aux admins.
- * Le fichier contient des données sensibles (hashs de mots de passe, messages
- * privés) : à conserver en lieu sûr.
+ *
+ * RGPD / minimisation : on N'EXPORTE PAS les `passwordHash` (secrets d'auth) ni
+ * les abonnements push (tokens d'appareils). Le fichier reste sensible
+ * (coordonnées, messages privés) : à conserver en lieu sûr et à durée limitée.
  */
 export async function GET() {
   await requireAdmin();
@@ -19,7 +21,6 @@ export async function GET() {
       settings,
       units,
       users,
-      pushSubscriptions,
       incidentReports,
       incidentPhotos,
       forumCategories,
@@ -44,8 +45,30 @@ export async function GET() {
       prisma.building.findMany(),
       prisma.setting.findMany(),
       prisma.unit.findMany(),
-      prisma.user.findMany(),
-      prisma.pushSubscription.findMany(),
+      // Utilisateurs SANS passwordHash (secret d'authentification).
+      prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          role: true,
+          status: true,
+          signupResidenceName: true,
+          signupBuildingName: true,
+          signupBuildingId: true,
+          signupUnitLabel: true,
+          unitId: true,
+          shareInDirectory: true,
+          shareEmail: true,
+          sharePhone: true,
+          emailNotifications: true,
+          lastSeenAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
       prisma.incidentReport.findMany(),
       prisma.incidentPhoto.findMany(),
       prisma.forumCategory.findMany(),
@@ -71,15 +94,15 @@ export async function GET() {
       _meta: {
         app: "Voisins Collectif et en Colère",
         format: "json-full",
-        version: 1,
+        version: 2,
         exportedAt: new Date().toISOString(),
+        note: "passwordHash et tokens push exclus (RGPD).",
       },
       residences,
       buildings,
       settings,
       units,
       users,
-      pushSubscriptions,
       incidentReports,
       incidentPhotos,
       forumCategories,
@@ -101,7 +124,8 @@ export async function GET() {
       landlordSteps,
     };
 
-    const json = JSON.stringify(backup, null, 2);
+    // Pas d'indentation : réduit la taille et l'empreinte mémoire du fichier.
+    const json = JSON.stringify(backup);
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
 
     return new Response(json, {
