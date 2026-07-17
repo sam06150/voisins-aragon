@@ -150,6 +150,7 @@ export default async function AdminComptesPage({
                     </label>
                     <Select
                       name="buildingId"
+                      aria-label={t("Bâtiment")}
                       defaultValue={u.signupBuildingId ?? ""}
                     >
                       <option value="">{t("— Choisir —")}</option>
@@ -172,6 +173,7 @@ export default async function AdminComptesPage({
                       </label>
                       <Input
                         name="newResidenceName"
+                        aria-label={t("Nouvelle résidence")}
                         placeholder={t("Nom (facultatif)")}
                         defaultValue={u.signupResidenceName ?? ""}
                       />
@@ -182,6 +184,7 @@ export default async function AdminComptesPage({
                       </label>
                       <Input
                         name="newBuildingName"
+                        aria-label={t("Nouveau bâtiment")}
                         placeholder={t("Nom")}
                         defaultValue={u.signupBuildingName ?? ""}
                       />
@@ -190,7 +193,11 @@ export default async function AdminComptesPage({
                       <label className="mb-1 block text-xs text-gray-500">
                         {t("Code bâtiment")}
                       </label>
-                      <Input name="newBuildingCode" placeholder={t("Ex : A")} />
+                      <Input
+                        name="newBuildingCode"
+                        aria-label={t("Code bâtiment")}
+                        placeholder={t("Ex : A")}
+                      />
                     </div>
                   </div>
                   <p className="mb-1 text-xs font-medium text-gray-600">
@@ -201,7 +208,11 @@ export default async function AdminComptesPage({
                       <label className="mb-1 block text-xs text-gray-500">
                         {t("Logement existant")}
                       </label>
-                      <Select name="unitId" defaultValue="">
+                      <Select
+                        name="unitId"
+                        aria-label={t("Logement existant")}
+                        defaultValue=""
+                      >
                         <option value="">{t("— Aucun / créer ci-dessous —")}</option>
                         {unitsForBuilding.map((unit) => (
                           <option key={unit.id} value={unit.id}>
@@ -214,7 +225,12 @@ export default async function AdminComptesPage({
                       <label className="mb-1 block text-xs text-gray-500">
                         {t("…ou nouvel étage")}
                       </label>
-                      <Input name="newFloor" type="number" placeholder={t("Ex : 3")} />
+                      <Input
+                        name="newFloor"
+                        type="number"
+                        aria-label={t("…ou nouvel étage")}
+                        placeholder={t("Ex : 3")}
+                      />
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-gray-500">
@@ -222,6 +238,7 @@ export default async function AdminComptesPage({
                       </label>
                       <Input
                         name="newUnitLabel"
+                        aria-label={t("…et libellé")}
                         placeholder={t("Ex : 3B")}
                         defaultValue={u.signupUnitLabel ?? ""}
                       />
@@ -360,6 +377,7 @@ export default async function AdminComptesPage({
                       <Input
                         name="newPassword"
                         type="text"
+                        aria-label={t("Nouveau mot de passe")}
                         placeholder={t("8 caractères min.")}
                         minLength={8}
                         required
@@ -378,7 +396,11 @@ export default async function AdminComptesPage({
                       <label className="mb-1 block text-xs text-gray-500">
                         {t("Rôle")}
                       </label>
-                      <Select name="role" defaultValue={u.role}>
+                      <Select
+                        name="role"
+                        aria-label={t("Rôle")}
+                        defaultValue={u.role}
+                      >
                         {ASSIGNABLE_ROLES.map((r) => (
                           <option key={r} value={r}>
                             {t(roleLabels[r])}

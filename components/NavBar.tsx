@@ -107,12 +107,18 @@ export default function NavBar({
                 className="relative"
                 onMouseEnter={() => setDropdown(g.label)}
                 onMouseLeave={() => setDropdown(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setDropdown(null);
+                }}
               >
                 <button
                   type="button"
                   onClick={() =>
                     setDropdown((d) => (d === g.label ? null : g.label))
                   }
+                  aria-haspopup="menu"
+                  aria-expanded={dropdown === g.label}
+                  aria-controls={`menu-${g.label.replace(/\s+/g, "-")}`}
                   className={`flex items-center gap-1 rounded-md px-2.5 py-2 text-sm font-medium transition ${
                     groupActive
                       ? "bg-rose-50 text-rose-700"
@@ -120,14 +126,21 @@ export default function NavBar({
                   }`}
                 >
                   {t(g.label)}
-                  <span className="text-[10px]">▾</span>
+                  <span className="text-[10px]" aria-hidden="true">
+                    ▾
+                  </span>
                 </button>
                 {dropdown === g.label ? (
-                  <div className="absolute left-0 top-full z-40 min-w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  <div
+                    id={`menu-${g.label.replace(/\s+/g, "-")}`}
+                    role="menu"
+                    className="absolute left-0 top-full z-40 min-w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                  >
                     {g.items.map((i) => (
                       <Link
                         key={i.href}
                         href={i.href}
+                        role="menuitem"
                         onClick={() => setDropdown(null)}
                         className={`block px-3 py-2 text-sm ${
                           isActive(i.href)
