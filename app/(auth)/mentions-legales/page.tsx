@@ -13,8 +13,14 @@ export default function MentionsLegalesPage() {
         <h2 className="mb-1 font-semibold text-gray-900">Éditeur</h2>
         <p>
           Plateforme « Voisins Collectif et en Colère », éditée par le collectif
-          des locataires. <em>À compléter : nom du responsable, adresse,
-          e-mail de contact.</em>
+          des locataires de la résidence. Contact :{" "}
+          <a
+            href="mailto:sdsb.2023@gmail.com"
+            className="text-rose-700 hover:underline"
+          >
+            sdsb.2023@gmail.com
+          </a>
+          .
         </p>
       </section>
 

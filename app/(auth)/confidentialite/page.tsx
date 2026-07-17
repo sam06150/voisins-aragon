@@ -12,13 +12,20 @@ export default function ConfidentialitePage() {
       </h1>
       <p className="mb-4 text-xs text-gray-500">
         Plateforme « Voisins Collectif et en Colère ». Dernière mise à jour :
-        à compléter.
+        16 juillet 2026.
       </p>
 
       <Section title="1. Responsable du traitement">
-        La plateforme est gérée par le collectif des locataires (référent :{" "}
-        <em>à compléter — nom / adresse / e-mail de contact</em>). Pour toute
-        question relative à vos données : <em>à compléter</em>.
+        La plateforme est gérée par le collectif des locataires de la résidence.
+        Pour toute question relative à vos données, ou pour exercer vos droits,
+        écrivez à{" "}
+        <a
+          href="mailto:sdsb.2023@gmail.com"
+          className="text-rose-700 hover:underline"
+        >
+          sdsb.2023@gmail.com
+        </a>
+        .
       </Section>
 
       <Section title="2. Données que nous collectons">
@@ -76,14 +83,23 @@ export default function ConfidentialitePage() {
         </ul>
         <p className="mt-1">
           Nous veillons à ce que ces prestataires présentent des garanties
-          adéquates. <em>À compléter : localisation exacte / clauses.</em>
+          adéquates ; lorsqu'un transfert hors Union européenne a lieu
+          (Cloudinary), il est encadré par les clauses contractuelles types de
+          la Commission européenne.
         </p>
       </Section>
 
       <Section title="6. Durées de conservation">
-        Vos données sont conservées tant que votre compte est actif. Un compte
-        supprimé est anonymisé. <em>À compléter : durées précises (comptes en
-        attente/refusés, messages, journaux).</em>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Compte actif : tant que votre compte existe.</li>
+          <li>Compte en attente ou refusé : supprimé au bout de 12 mois.</li>
+          <li>Compte inactif : anonymisé 3 ans après la dernière connexion.</li>
+          <li>Sauvegardes : conservées 12 mois au maximum.</li>
+        </ul>
+        <p className="mt-1">
+          Un compte supprimé est anonymisé ; les contributions collectives
+          (forum, signalements) sont conservées de façon anonyme.
+        </p>
       </Section>
 
       <Section title="7. Vos droits">
