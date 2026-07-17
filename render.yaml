@@ -41,6 +41,11 @@ services:
       # Secret de session généré automatiquement par Render.
       - key: SESSION_SECRET
         generateValue: true
+      # Secret partagé pour la purge de rétention RGPD (route /api/cron/purge),
+      # déclenchée par GitHub Actions. MÊME valeur ici et dans le secret de
+      # dépôt GitHub `CRON_SECRET`.
+      - key: CRON_SECRET
+        sync: false
       # URL publique de l'app (à renseigner après le 1er déploiement).
       - key: APP_URL
         sync: false

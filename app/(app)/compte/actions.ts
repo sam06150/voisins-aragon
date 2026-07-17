@@ -12,7 +12,7 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { changePasswordSchema } from "@/lib/validation";
-import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
+import { anonymizedUserData } from "@/lib/accounts";
 
 export async function updateEmailPref(formData: FormData) {
   const user = await requireApproved();
@@ -80,22 +80,7 @@ export async function deleteMyAccount() {
     prisma.pushSubscription.deleteMany({ where: { userId: user.id } }),
     prisma.user.update({
       where: { id: user.id },
-      data: {
-        firstName: "Compte",
-        lastName: "supprimé",
-        email: `${DELETED_EMAIL_PREFIX}${user.id}@aragon.local`,
-        phone: null,
-        passwordHash: randomHash,
-        status: "REJECTED",
-        role: "TENANT",
-        unitId: null,
-        shareInDirectory: false,
-        shareEmail: false,
-        sharePhone: false,
-        emailNotifications: false,
-        lastSeenAt: null,
-        consentAt: null,
-      },
+      data: anonymizedUserData(user.id, randomHash),
     }),
   ]);
 
