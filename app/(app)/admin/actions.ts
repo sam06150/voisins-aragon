@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "crypto";
+import type { Role, User } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -17,6 +18,22 @@ import { geocodeAddress } from "@/lib/geocode";
 import { setSetting } from "@/lib/settings";
 
 /**
+ * Charge le compte cible et vérifie que l'acteur peut agir dessus (rôle
+ * strictement supérieur). Redirige (message d'erreur) si le compte n'existe
+ * pas ou si le rang est insuffisant ; renvoie sinon la cible.
+ */
+async function assertCanActOn(
+  actor: { id: string; role: Role },
+  userId: string,
+  rankErrorPath: string,
+): Promise<User> {
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target) redirect("/admin/comptes");
+  if (rank(actor.role) <= rank(target.role)) redirect(rankErrorPath);
+  return target;
+}
+
+/**
  * "Supprime" un compte : efface les données personnelles et coupe l'accès,
  * tout en conservant les contributions (anonymisées) dans l'historique du
  * collectif. On ne peut supprimer qu'un compte de rôle strictement inférieur.
@@ -28,12 +45,7 @@ export async function deleteUser(formData: FormData) {
     redirect("/admin/comptes?delerror=self");
   }
 
-  const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) redirect("/admin/comptes");
-
-  if (rank(actor.role) <= rank(target.role)) {
-    redirect("/admin/comptes?delerror=rank");
-  }
+  await assertCanActOn(actor, userId, "/admin/comptes?delerror=rank");
 
   const randomHash = await hashPassword(randomUUID());
   await prisma.user.update({
@@ -72,12 +84,7 @@ export async function suspendUser(formData: FormData) {
     redirect("/admin/comptes?suerror=self");
   }
 
-  const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) redirect("/admin/comptes");
-
-  if (rank(actor.role) <= rank(target.role)) {
-    redirect("/admin/comptes?suerror=rank");
-  }
+  await assertCanActOn(actor, userId, "/admin/comptes?suerror=rank");
 
   await prisma.user.update({
     where: { id: userId },
@@ -95,12 +102,7 @@ export async function reactivateUser(formData: FormData) {
   const userId = formData.get("userId")?.toString() ?? "";
   if (!userId) redirect("/admin/comptes");
 
-  const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) redirect("/admin/comptes");
-
-  if (rank(actor.role) <= rank(target.role)) {
-    redirect("/admin/comptes?suerror=rank");
-  }
+  await assertCanActOn(actor, userId, "/admin/comptes?suerror=rank");
 
   await prisma.user.update({
     where: { id: userId },
@@ -252,13 +254,7 @@ export async function resetUserPassword(formData: FormData) {
 
   // On ne peut réinitialiser que le mot de passe d'un compte de rôle
   // strictement inférieur (sinon un sous-admin prendrait la main sur un admin).
-  const target = await prisma.user.findUnique({
-    where: { id: parsed.data.userId },
-  });
-  if (!target) redirect("/admin/comptes");
-  if (rank(admin.role) <= rank(target.role)) {
-    redirect("/admin/comptes?pwerror=rank");
-  }
+  await assertCanActOn(admin, parsed.data.userId, "/admin/comptes?pwerror=rank");
 
   const passwordHash = await hashPassword(parsed.data.newPassword);
   await prisma.user.update({

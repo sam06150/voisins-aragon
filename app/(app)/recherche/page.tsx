@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { textContains } from "@/lib/search";
 import { Badge, Card, EmptyState, Input, PageHeader } from "@/components/ui";
 
 type Result = {
@@ -29,40 +30,40 @@ export default async function RecherchePage({
         prisma.incidentReport.findMany({
           where: {
             OR: [
-              { title: { contains: query } },
-              { description: { contains: query } },
+              { title: textContains(query) },
+              { description: textContains(query) },
             ],
           },
           take: 8,
           orderBy: { createdAt: "desc" },
         }),
         prisma.forumThread.findMany({
-          where: { title: { contains: query } },
+          where: { title: textContains(query) },
           take: 8,
           orderBy: { updatedAt: "desc" },
         }),
         prisma.petition.findMany({
           where: {
             OR: [
-              { title: { contains: query } },
-              { description: { contains: query } },
+              { title: textContains(query) },
+              { description: textContains(query) },
             ],
           },
           take: 8,
         }),
         prisma.poll.findMany({
-          where: { question: { contains: query } },
+          where: { question: textContains(query) },
           take: 8,
         }),
         prisma.document.findMany({
-          where: { title: { contains: query } },
+          where: { title: textContains(query) },
           take: 8,
         }),
         prisma.announcement.findMany({
           where: {
             OR: [
-              { title: { contains: query } },
-              { body: { contains: query } },
+              { title: textContains(query) },
+              { body: textContains(query) },
             ],
           },
           take: 8,
@@ -72,8 +73,8 @@ export default async function RecherchePage({
             status: "APPROVED",
             shareInDirectory: true,
             OR: [
-              { firstName: { contains: query } },
-              { lastName: { contains: query } },
+              { firstName: textContains(query) },
+              { lastName: textContains(query) },
             ],
           },
           take: 8,
