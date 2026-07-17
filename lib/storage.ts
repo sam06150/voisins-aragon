@@ -19,7 +19,7 @@ export class UploadError extends Error {}
  * Vérifie que le contenu réel du fichier (ses premiers octets) correspond au
  * type MIME annoncé par le client (qui est falsifiable). Défense en profondeur.
  */
-function hasValidMagicBytes(buf: Buffer, mime: string): boolean {
+export function hasValidMagicBytes(buf: Buffer, mime: string): boolean {
   if (buf.length < 4) return false;
   switch (mime) {
     case "image/jpeg":
