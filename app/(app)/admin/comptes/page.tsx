@@ -1,9 +1,19 @@
 import type { Role } from "@prisma/client";
+import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isAdmin, isManager, rank } from "@/lib/roles";
 import { prisma } from "@/lib/db";
-import { Alert, Badge, Button, Card, EmptyState, Input, Select } from "@/components/ui";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  LinkButton,
+  Select,
+} from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate, roleLabels } from "@/lib/labels";
 import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
@@ -115,9 +125,12 @@ export default async function AdminComptesPage({
               <Card key={u.id}>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="font-semibold text-gray-900">
+                    <Link
+                      href={`/admin/comptes/${u.id}`}
+                      className="font-semibold text-gray-900 hover:underline"
+                    >
                       {u.firstName} {u.lastName}
-                    </div>
+                    </Link>
                     <div className="text-sm text-gray-500">{u.email}</div>
                     {u.phone ? (
                       <div className="text-sm text-gray-500">📞 {u.phone}</div>
@@ -258,6 +271,20 @@ export default async function AdminComptesPage({
                     </ConfirmButton>
                   </div>
                 </form>
+
+                {rank(admin.role) > rank(u.role) ? (
+                  <form action={deleteUser} className="mt-3">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <ConfirmButton
+                      variant="danger"
+                      confirmMessage={t(
+                        "Supprimer ce compte ? Les données personnelles et l'accès seront effacés (les contributions restent anonymes).",
+                      )}
+                    >
+                      {t("Supprimer le compte")}
+                    </ConfirmButton>
+                  </form>
+                ) : null}
               </Card>
             );
           })}
@@ -333,9 +360,12 @@ export default async function AdminComptesPage({
             <Card key={u.id}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="font-medium text-gray-900">
+                  <Link
+                    href={`/admin/comptes/${u.id}`}
+                    className="font-medium text-gray-900 hover:underline"
+                  >
                     {u.firstName} {u.lastName}
-                  </div>
+                  </Link>
                   <div className="text-xs text-gray-500">{u.email}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     {u.status === "APPROVED" ? (
@@ -360,6 +390,19 @@ export default async function AdminComptesPage({
                         : t("Sans logement")}
                     </Badge>
                   </div>
+                </div>
+                <div className="flex gap-2">
+                  <LinkButton
+                    href={`/admin/comptes/${u.id}`}
+                    variant="secondary"
+                  >
+                    {t("Voir la fiche")}
+                  </LinkButton>
+                  {canManageRoles && rank(admin.role) > rank(u.role) ? (
+                    <LinkButton href={`/admin/comptes/${u.id}/modifier`}>
+                      ✏️ {t("Modifier")}
+                    </LinkButton>
+                  ) : null}
                 </div>
               </div>
 

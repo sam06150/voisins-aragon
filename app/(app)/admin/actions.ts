@@ -11,7 +11,11 @@ import {
 } from "@/lib/auth";
 import { rank } from "@/lib/roles";
 import { prisma } from "@/lib/db";
-import { adminResetPasswordSchema, promoteSchema } from "@/lib/validation";
+import {
+  adminResetPasswordSchema,
+  adminUpdateUserSchema,
+  promoteSchema,
+} from "@/lib/validation";
 import { sendEmail, emailLayout, escapeHtml } from "@/lib/email";
 import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
 import { geocodeAddress } from "@/lib/geocode";
@@ -246,6 +250,75 @@ export async function approveAccount(formData: FormData) {
   revalidatePath("/admin/comptes");
   revalidatePath("/annuaire");
   redirect("/admin/comptes");
+}
+
+/**
+ * Édite la fiche d'un voisin (identité, contact, statut, logement). Réservé aux
+ * administrateurs, et uniquement sur un compte de rôle strictement inférieur.
+ * Les préférences d'annuaire ne sont volontairement pas modifiables ici : ce
+ * sont des consentements que seul l'intéressé peut donner ou retirer (RGPD).
+ */
+export async function updateUser(formData: FormData) {
+  const actor = await requireAdmin();
+
+  const parsed = adminUpdateUserSchema.safeParse({
+    userId: formData.get("userId")?.toString() ?? "",
+    firstName: formData.get("firstName")?.toString() ?? "",
+    lastName: formData.get("lastName")?.toString() ?? "",
+    email: formData.get("email")?.toString() ?? "",
+    phone: formData.get("phone")?.toString() ?? "",
+    status: formData.get("status")?.toString() ?? "",
+    unitId: formData.get("unitId")?.toString() ?? "",
+    newBuildingId: formData.get("newBuildingId")?.toString() ?? "",
+    newFloor: formData.get("newFloor")?.toString() ?? "",
+    newUnitLabel: formData.get("newUnitLabel")?.toString() ?? "",
+  });
+  if (!parsed.success) redirect("/admin/comptes?editerror=champs");
+
+  const d = parsed.data;
+  const back = `/admin/comptes/${d.userId}`;
+
+  await assertCanActOn(actor, d.userId, `${back}?editerror=rank`);
+
+  // L'e-mail sert d'identifiant de connexion : il doit rester unique.
+  const clash = await prisma.user.findFirst({
+    where: { email: d.email, id: { not: d.userId } },
+    select: { id: true },
+  });
+  if (clash) redirect(`${back}?editerror=email`);
+
+  // Logement : soit un existant est choisi, soit on en crée un dans le
+  // bâtiment indiqué, soit on détache le compte ("" = sans logement).
+  let unitId: string | null = d.unitId || null;
+  if (!unitId && d.newBuildingId && d.newUnitLabel) {
+    unitId = await findOrCreateUnit(
+      d.newBuildingId,
+      d.newUnitLabel,
+      d.newFloor ?? "",
+    );
+  } else if (unitId) {
+    const unit = await prisma.unit.findUnique({ where: { id: unitId } });
+    if (!unit) redirect(`${back}?editerror=unit`);
+  }
+
+  await prisma.user.update({
+    where: { id: d.userId },
+    data: {
+      firstName: d.firstName,
+      lastName: d.lastName,
+      email: d.email,
+      phone: d.phone || null,
+      status: d.status,
+      unitId,
+      // Un compte suspendu ne doit plus apparaître "en ligne".
+      ...(d.status === "SUSPENDED" ? { lastSeenAt: null } : {}),
+    },
+  });
+
+  revalidatePath("/admin/comptes");
+  revalidatePath(back);
+  revalidatePath("/annuaire");
+  redirect(`${back}?editok=1`);
 }
 
 export async function resetUserPassword(formData: FormData) {

@@ -81,6 +81,20 @@ export const promoteSchema = z.object({
   role: z.enum(["TENANT", "MODERATOR", "SUBADMIN", "ADMIN"]),
 });
 
+/** Édition d'un compte voisin par un référent (fiche admin). */
+export const adminUpdateUserSchema = z.object({
+  userId: z.string().trim().min(1),
+  firstName: z.string().trim().min(1, "Prénom requis").max(60),
+  lastName: z.string().trim().min(1, "Nom requis").max(60),
+  email: z.string().trim().toLowerCase().email("Adresse e-mail invalide"),
+  phone: z.string().trim().max(30).optional().or(z.literal("")),
+  status: z.enum(["PENDING", "APPROVED", "REJECTED", "SUSPENDED"]),
+  unitId: z.string().trim().optional().or(z.literal("")),
+  newBuildingId: z.string().trim().optional().or(z.literal("")),
+  newFloor: z.string().trim().max(4).optional().or(z.literal("")),
+  newUnitLabel: z.string().trim().max(60).optional().or(z.literal("")),
+});
+
 export const directoryPrefsSchema = z.object({
   phone: z.string().trim().max(30).optional().or(z.literal("")),
   shareInDirectory: z.boolean(),
