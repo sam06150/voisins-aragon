@@ -1,3 +1,4 @@
+import Link from "next/link";
 import QRCode from "qrcode";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
@@ -41,6 +42,32 @@ export default async function InviterPage() {
         <p className="mt-6 text-xs text-gray-500">
           {t("Astuce : vos voisins peuvent scanner le QR code avec l'appareil photo de leur téléphone.")}
         </p>
+      </Card>
+
+      <Card className="mt-4 text-center">
+        <h2 className="text-sm font-semibold text-gray-900">
+          {t("Affiche à imprimer pour votre bâtiment")}
+        </h2>
+        <p className="mt-1 text-xs text-gray-500">
+          {t(
+            "Une affiche A4 prête à imprimer, avec le QR code du site, à poser dans le hall ou l'ascenseur.",
+          )}
+        </p>
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
+          <Link
+            href="/affiche"
+            className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
+          >
+            🖨️ {t("Voir et imprimer l'affiche")}
+          </Link>
+          <a
+            href="/affiche-voisins-collectif.pdf"
+            download
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            ⬇️ {t("Télécharger le PDF")}
+          </a>
+        </div>
       </Card>
 
       <Card className="mt-4 text-center">

@@ -44,6 +44,7 @@ const GROUPS: NavGroup[] = [
       { href: "/messages", label: "Messagerie" },
       { href: "/entraide", label: "Entraide" },
       { href: "/inviter", label: "Inviter des voisins" },
+      { href: "/affiche", label: "Affiche à imprimer" },
     ],
   },
 ];
