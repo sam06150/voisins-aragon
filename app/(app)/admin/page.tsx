@@ -2,12 +2,27 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import {
+  scopeFor,
+  buildingScopeWhere,
+  optionalBuildingScopeWhere,
+  userScopeWhere,
+} from "@/lib/tenancy";
 import { Badge, Card } from "@/components/ui";
 import { formatDateTime, incidentStatusLabels } from "@/lib/labels";
 
 export default async function AdminDashboardPage() {
-  await requireStaff();
+  const admin = await requireStaff();
+  const scope = scopeFor(admin);
   const { t } = await getI18n();
+  const scopeUser = userScopeWhere(scope);
+  const scopeIncident = buildingScopeWhere(scope);
+  const scopeOptional = optionalBuildingScopeWhere(scope);
+  // Inscriptions en attente : inclure les comptes non encore rattachés.
+  const pendingWhere =
+    scope.kind === "residence"
+      ? { OR: [{ residenceId: scope.residenceId }, { residenceId: null }] }
+      : {};
 
   const [
     pendingCount,
@@ -18,19 +33,22 @@ export default async function AdminDashboardPage() {
     recentSignups,
     recentIncidents,
   ] = await Promise.all([
-    prisma.user.count({ where: { status: "PENDING" } }),
-    prisma.user.count({ where: { status: "APPROVED" } }),
+    prisma.user.count({ where: { ...pendingWhere, status: "PENDING" } }),
+    prisma.user.count({ where: { ...scopeUser, status: "APPROVED" } }),
     prisma.incidentReport.count({
-      where: { status: { in: ["OUVERT", "EN_COURS"] } },
+      where: {
+        AND: [scopeIncident, { status: { in: ["OUVERT", "EN_COURS"] } }],
+      },
     }),
-    prisma.petition.count(),
-    prisma.poll.count(),
+    prisma.petition.count({ where: scopeOptional }),
+    prisma.poll.count({ where: scopeOptional }),
     prisma.user.findMany({
-      where: { status: "PENDING" },
+      where: { ...pendingWhere, status: "PENDING" },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
     prisma.incidentReport.findMany({
+      where: scopeIncident,
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { building: true },

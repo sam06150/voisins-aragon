@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, buildingScopeWhere, buildingsFor } from "@/lib/tenancy";
 import { publicFileUrl } from "@/lib/storage";
 import { Select } from "@/components/ui";
 import PrintButton from "@/components/PrintButton";
@@ -17,18 +18,24 @@ export default async function DossierPage({
 }: {
   searchParams: Promise<{ batiment?: string }>;
 }) {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { batiment } = await searchParams;
 
-  const buildings = await prisma.building.findMany({ orderBy: { code: "asc" } });
+  const buildings = await buildingsFor(scope);
   const selected = batiment && batiment !== "tous" ? batiment : null;
   const building = selected
     ? buildings.find((b) => b.id === selected)
     : null;
 
   const incidents = await prisma.incidentReport.findMany({
-    where: selected ? { buildingId: selected } : {},
+    where: {
+      AND: [
+        buildingScopeWhere(scope), // cloisonnement par résidence
+        selected ? { buildingId: selected } : {},
+      ],
+    },
     include: {
       building: true,
       unit: true,

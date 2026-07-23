@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import {
   requireAdmin,
   requireManager,
+  requireStaff,
   hashPassword,
 } from "@/lib/auth";
 import { rank } from "@/lib/roles";
@@ -14,6 +15,7 @@ import { prisma } from "@/lib/db";
 import {
   adminResetPasswordSchema,
   adminUpdateUserSchema,
+  joinRequestStatusSchema,
   promoteSchema,
 } from "@/lib/validation";
 import { sendEmail, emailLayout, escapeHtml } from "@/lib/email";
@@ -224,10 +226,22 @@ export async function approveAccount(formData: FormData) {
   }
   if (conflict) redirect("/admin/comptes?error=dup");
 
-  // Si une unité précise est fournie, on vérifie simplement qu'elle existe.
+  // Si une unité précise est fournie, on vérifie qu'elle existe.
   if (unitId) {
     const unit = await prisma.unit.findUnique({ where: { id: unitId } });
     if (!unit) redirect("/admin/comptes?error=unit");
+  }
+
+  // Cloisonnement : on rattache le compte à la résidence de son bâtiment.
+  // (Le référent a résolu le bâtiment juste au-dessus.) residenceId peut rester
+  // null si le bâtiment n'appartient à aucune résidence (déploiement historique).
+  let residenceId: string | null = null;
+  if (targetBuildingId) {
+    const b = await prisma.building.findUnique({
+      where: { id: targetBuildingId },
+      select: { residenceId: true },
+    });
+    residenceId = b?.residenceId ?? null;
   }
 
   await prisma.user.update({
@@ -235,6 +249,7 @@ export async function approveAccount(formData: FormData) {
     data: {
       status: "APPROVED",
       ...(unitId ? { unitId } : {}),
+      ...(residenceId ? { residenceId } : {}),
     },
   });
 
@@ -301,6 +316,18 @@ export async function updateUser(formData: FormData) {
     if (!unit) redirect(`${back}?editerror=unit`);
   }
 
+  // Cloisonnement : la résidence suit le logement rattaché (via son bâtiment).
+  // Sans logement, on ne modifie pas le rattachement existant.
+  let residenceUpdate: { residenceId: string | null } | Record<string, never> =
+    {};
+  if (unitId) {
+    const unit = await prisma.unit.findUnique({
+      where: { id: unitId },
+      select: { building: { select: { residenceId: true } } },
+    });
+    residenceUpdate = { residenceId: unit?.building.residenceId ?? null };
+  }
+
   await prisma.user.update({
     where: { id: d.userId },
     data: {
@@ -310,6 +337,7 @@ export async function updateUser(formData: FormData) {
       phone: d.phone || null,
       status: d.status,
       unitId,
+      ...residenceUpdate,
       // Un compte suspendu ne doit plus apparaître "en ligne".
       ...(d.status === "SUSPENDED" ? { lastSeenAt: null } : {}),
     },
@@ -530,4 +558,33 @@ export async function setResidenceName(formData: FormData) {
   await setSetting("residence_name", name);
   revalidatePath("/", "layout");
   redirect("/admin/immeubles?rok=1");
+}
+
+/**
+ * Traite une candidature publique (page /rejoindre ou /referent) : changement
+ * de statut + note interne. La candidature n'est PAS un compte : accepter une
+ * candidature de référent signifie qu'on a contacté la personne et qu'on va
+ * lui créer un accès, pas qu'un accès est créé automatiquement.
+ */
+export async function updateJoinRequest(formData: FormData) {
+  await requireStaff();
+  const parsed = joinRequestStatusSchema.safeParse({
+    id: formData.get("id")?.toString() ?? "",
+    status: formData.get("status")?.toString() ?? "",
+    handledNote: formData.get("handledNote")?.toString() ?? "",
+  });
+  if (!parsed.success) {
+    redirect("/admin/candidatures?cerror=1");
+  }
+
+  await prisma.joinRequest.update({
+    where: { id: parsed.data.id },
+    data: {
+      status: parsed.data.status,
+      handledNote: parsed.data.handledNote || null,
+    },
+  });
+
+  revalidatePath("/admin/candidatures");
+  redirect("/admin/candidatures?cok=1");
 }

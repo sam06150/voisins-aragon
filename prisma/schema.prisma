@@ -57,6 +57,83 @@ model Residence {
   longitude Float?
   createdAt DateTime   @default(now())
   buildings Building[]
+
+  // --- Ouverture multi-résidences (une résidence = un espace cloisonné) ---
+  /** Identifiant d'URL, ex. "aragon-toulouse". Sert d'espace de nommage public. */
+  slug       String? @unique
+  city       String?
+  postalCode String?
+  /** Code pays ISO ("FR", "BE", "CH", "CA", "MA"…) — ouverture internationale. */
+  country    String? @default("FR")
+  /** Bailleur concerné, ex. "CDC Habitat", "3F", "Vilogia". */
+  landlord   String?
+  /** Un espace n'est ouvert aux locataires qu'une fois un référent validé. */
+  isOpen     Boolean @default(false)
+
+  members      User[]        @relation("ResidenceMembers")
+  joinRequests JoinRequest[]
+
+  @@index([country, city])
+}
+
+/** Nature d'une candidature arrivant du site public (TikTok, affiche, bouche-à-oreille). */
+enum JoinRequestKind {
+  /** Veut devenir référent/modérateur de son bâtiment ou de sa résidence. */
+  REFERENT
+  /** Locataire qui veut rejoindre (ou faire ouvrir) l'espace de sa résidence. */
+  LOCATAIRE
+}
+
+enum JoinRequestStatus {
+  NOUVEAU
+  CONTACTE
+  ACCEPTE
+  REFUSE
+}
+
+/**
+ * Candidature publique déposée depuis /rejoindre ou /referent.
+ *
+ * Ce n'est PAS un compte : aucun mot de passe, aucun accès. C'est une demande
+ * qu'un référent traite depuis /admin/candidatures. Tant qu'elle n'est pas
+ * acceptée, la personne ne voit rien de la plateforme (cloisonnement).
+ */
+model JoinRequest {
+  id     String            @id @default(cuid())
+  kind   JoinRequestKind
+  status JoinRequestStatus @default(NOUVEAU)
+
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+
+  // Localisation déclarée (texte libre : la résidence n'existe pas encore en base)
+  city          String
+  postalCode    String?
+  country       String  @default("FR")
+  landlord      String?
+  residenceName String
+  buildingName  String?
+
+  /** Pourquoi la personne se manifeste (facultatif, sert au tri). */
+  message String?
+
+  /** Rattachée à une résidence existante si un référent l'a identifiée. */
+  residenceId String?
+  residence   Residence? @relation(fields: [residenceId], references: [id])
+
+  /** Horodatage du consentement RGPD (case cochée sur le formulaire public). */
+  consentAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /** Note interne du référent qui traite la demande. */
+  handledNote String?
+
+  @@index([status, createdAt])
+  @@index([kind, status])
+  @@index([country, city])
 }
 
 model Building {
@@ -122,6 +199,14 @@ model User {
   unitId String?
   unit   Unit?   @relation(fields: [unitId], references: [id])
 
+  /**
+   * Résidence de rattachement. Null = ancien compte mono-résidence (comportement
+   * historique inchangé). Renseigné, il devient la clé de cloisonnement : un
+   * locataire ne doit voir que les données de SA résidence.
+   */
+  residenceId String?
+  residence   Residence? @relation("ResidenceMembers", fields: [residenceId], references: [id])
+
   // Préférences d'annuaire (opt-in par champ)
   shareInDirectory Boolean @default(false)
   shareEmail       Boolean @default(false)
@@ -135,6 +220,11 @@ model User {
 
   // Horodatage d'acceptation de la politique de confidentialité (RGPD).
   consentAt DateTime?
+
+  // Horodatage d'acceptation de la charte du référent (membres du staff).
+  // Null tant que la personne n'a pas accepté ; l'accès à l'espace
+  // d'administration est bloqué jusque-là. Voir CHARTE-MODERATEUR.md.
+  moderatorCharterAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -162,6 +252,7 @@ model User {
 
   @@index([status, lastSeenAt]) // annuaire + présence "en ligne"
   @@index([unitId]) // filtres par bâtiment/logement
+  @@index([residenceId]) // cloisonnement par résidence
 }
 
 /** Abonnement d'un appareil aux notifications push (Web Push). */

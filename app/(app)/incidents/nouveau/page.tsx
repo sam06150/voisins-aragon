@@ -1,19 +1,19 @@
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, buildingScopeWhere, buildingsFor } from "@/lib/tenancy";
 import { Card, PageHeader } from "@/components/ui";
 import IncidentForm from "./IncidentForm";
 
 export default async function NouveauIncidentPage() {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
 
   const [buildings, units] = await Promise.all([
-    prisma.building.findMany({
-      orderBy: { code: "asc" },
-      select: { id: true, name: true },
-    }),
+    buildingsFor(scope),
     prisma.unit.findMany({
+      where: buildingScopeWhere(scope), // logements de la résidence uniquement
       orderBy: [{ floor: "asc" }, { label: "asc" }],
       select: { id: true, label: true, floor: true, buildingId: true },
     }),

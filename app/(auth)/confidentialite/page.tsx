@@ -12,13 +12,15 @@ export default function ConfidentialitePage() {
       </h1>
       <p className="mb-4 text-xs text-gray-500">
         Plateforme « Voisins Collectif et en Colère ». Dernière mise à jour :
-        16 juillet 2026.
+        23 juillet 2026.
       </p>
 
       <Section title="1. Responsable du traitement">
-        La plateforme est gérée par le collectif des locataires de la résidence.
-        Pour toute question relative à vos données, ou pour exercer vos droits,
-        écrivez à{" "}
+        La plateforme est gérée par le collectif des locataires
+        {" "}
+        {/* Une fois l'association créée, remplacer par : « par l'association … (loi 1901), … ». */}
+        (en cours de constitution en association loi 1901). Pour toute question
+        relative à vos données, ou pour exercer vos droits, écrivez à{" "}
         <a
           href="mailto:sdsb.2023@gmail.com"
           className="text-rose-700 hover:underline"
@@ -44,6 +46,14 @@ export default function ConfidentialitePage() {
             Données techniques : mot de passe (stocké de façon chiffrée), date
             de dernière connexion, préférences de partage et de notifications.
           </li>
+          <li>
+            Candidature (si vous vous manifestez via « Rejoindre » ou « Devenir
+            référent » sans encore avoir de compte) : prénom, nom, e-mail,
+            téléphone facultatif, ville, code postal, pays, bailleur, résidence
+            et message éventuels. Ces informations servent uniquement à vous
+            recontacter pour ouvrir l'espace de votre résidence et ne sont
+            jamais transmises au bailleur.
+          </li>
         </ul>
       </Section>
 
@@ -60,6 +70,11 @@ export default function ConfidentialitePage() {
           </li>
           <li>
             Réserver l'accès aux locataires (vérification par un référent).
+          </li>
+          <li>
+            Traiter les candidatures reçues via « Rejoindre » / « Devenir
+            référent » et ouvrir l'espace d'une résidence (mesures prises à
+            votre demande, préalables à l'adhésion au service).
           </li>
         </ul>
       </Section>
@@ -94,6 +109,10 @@ export default function ConfidentialitePage() {
           <li>Compte actif : tant que votre compte existe.</li>
           <li>Compte en attente ou refusé : supprimé au bout de 12 mois.</li>
           <li>Compte inactif : anonymisé 3 ans après la dernière connexion.</li>
+          <li>
+            Candidature non transformée en compte : supprimée au bout de
+            12 mois.
+          </li>
           <li>Sauvegardes : conservées 12 mois au maximum.</li>
         </ul>
         <p className="mt-1">

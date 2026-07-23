@@ -2,6 +2,12 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import {
+  scopeFor,
+  buildingScopeWhere,
+  optionalBuildingScopeWhere,
+  userScopeWhere,
+} from "@/lib/tenancy";
 import { textContains } from "@/lib/search";
 import { Badge, Card, EmptyState, Input, PageHeader } from "@/components/ui";
 
@@ -17,10 +23,13 @@ export default async function RecherchePage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { q } = await searchParams;
   const query = (q ?? "").trim();
+  // cloisonnement par résidence appliqué à chaque source de recherche
+  const scopeWhere = optionalBuildingScopeWhere(scope);
 
   let results: Result[] = [];
 
@@ -29,47 +38,63 @@ export default async function RecherchePage({
       await Promise.all([
         prisma.incidentReport.findMany({
           where: {
-            OR: [
-              { title: textContains(query) },
-              { description: textContains(query) },
+            AND: [
+              buildingScopeWhere(scope),
+              {
+                OR: [
+                  { title: textContains(query) },
+                  { description: textContains(query) },
+                ],
+              },
             ],
           },
           take: 8,
           orderBy: { createdAt: "desc" },
         }),
         prisma.forumThread.findMany({
-          where: { title: textContains(query) },
+          where: { AND: [{ category: scopeWhere }, { title: textContains(query) }] },
           take: 8,
           orderBy: { updatedAt: "desc" },
         }),
         prisma.petition.findMany({
           where: {
-            OR: [
-              { title: textContains(query) },
-              { description: textContains(query) },
+            AND: [
+              scopeWhere,
+              {
+                OR: [
+                  { title: textContains(query) },
+                  { description: textContains(query) },
+                ],
+              },
             ],
           },
           take: 8,
         }),
         prisma.poll.findMany({
-          where: { question: textContains(query) },
+          where: { AND: [scopeWhere, { question: textContains(query) }] },
           take: 8,
         }),
         prisma.document.findMany({
-          where: { title: textContains(query) },
+          where: { AND: [scopeWhere, { title: textContains(query) }] },
           take: 8,
         }),
         prisma.announcement.findMany({
           where: {
-            OR: [
-              { title: textContains(query) },
-              { body: textContains(query) },
+            AND: [
+              scopeWhere,
+              {
+                OR: [
+                  { title: textContains(query) },
+                  { body: textContains(query) },
+                ],
+              },
             ],
           },
           take: 8,
         }),
         prisma.user.findMany({
           where: {
+            ...userScopeWhere(scope),
             status: "APPROVED",
             shareInDirectory: true,
             OR: [

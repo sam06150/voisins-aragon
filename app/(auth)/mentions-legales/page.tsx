@@ -13,7 +13,9 @@ export default function MentionsLegalesPage() {
         <h2 className="mb-1 font-semibold text-gray-900">Éditeur</h2>
         <p>
           Plateforme « Voisins Collectif et en Colère », éditée par le collectif
-          des locataires de la résidence. Contact :{" "}
+          des locataires (en cours de constitution en association régie par la
+          loi du 1<sup>er</sup> juillet 1901). Directeur de la publication :
+          le/la président·e du collectif. Contact :{" "}
           <a
             href="mailto:sdsb.2023@gmail.com"
             className="text-rose-700 hover:underline"
@@ -22,6 +24,14 @@ export default function MentionsLegalesPage() {
           </a>
           .
         </p>
+        {/*
+          À compléter une fois l'association déclarée en préfecture :
+          - Dénomination exacte de l'association
+          - Numéro RNA (W…) et, le cas échéant, SIREN/SIRET
+          - Adresse du siège social
+          - Nom du directeur/de la directrice de la publication
+          Voir LEGAL.md et statuts-association.md à la racine du projet.
+        */}
       </section>
 
       <section className="mb-4">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireManager } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor } from "@/lib/tenancy";
 import { getResidenceName } from "@/lib/settings";
 import { Alert, Button, Card, Field, Input, Select } from "@/components/ui";
 import {
@@ -27,14 +28,22 @@ export default async function AdminImmeublesPage({
     rerror?: string;
   }>;
 }) {
-  await requireManager();
+  const admin = await requireManager();
+  const scope = scopeFor(admin);
   const { t } = await getI18n();
   const { ok, error, bok, berror, bwarn, rok, resok, rerror } =
     await searchParams;
 
+  // Un gestionnaire rattaché ne voit que sa résidence et ses bâtiments.
+  const residenceWhere =
+    scope.kind === "residence" ? { id: scope.residenceId } : {};
+  const buildingWhere =
+    scope.kind === "residence" ? { residenceId: scope.residenceId } : {};
+
   const [residences, buildings, residenceName] = await Promise.all([
-    prisma.residence.findMany({ orderBy: { name: "asc" } }),
+    prisma.residence.findMany({ where: residenceWhere, orderBy: { name: "asc" } }),
     prisma.building.findMany({
+      where: buildingWhere,
       orderBy: { code: "asc" },
       include: {
         units: { orderBy: [{ floor: "asc" }, { label: "asc" }] },

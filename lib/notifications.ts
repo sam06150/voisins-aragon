@@ -35,16 +35,31 @@ export async function notifyResidents(params: {
   message: string;
   link?: string;
   buildingId?: string | null;
+  /**
+   * Cloisonnement : si fourni, ne notifie que les comptes de cette résidence.
+   * Indispensable pour une annonce « générale » (buildingId null) — sans ça,
+   * elle partirait à toutes les résidences de l'instance.
+   */
+  residenceId?: string | null;
   excludeUserId?: string;
   email?: boolean;
   detail?: string;
 }) {
-  const { type, message, link, buildingId, excludeUserId, email, detail } =
-    params;
+  const {
+    type,
+    message,
+    link,
+    buildingId,
+    residenceId,
+    excludeUserId,
+    email,
+    detail,
+  } = params;
 
   const users = await prisma.user.findMany({
     where: {
       status: "APPROVED",
+      ...(residenceId ? { residenceId } : {}),
       ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
       ...(buildingId
         ? {

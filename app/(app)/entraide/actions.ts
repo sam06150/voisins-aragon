@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isStaff } from "@/lib/roles";
+import {
+  scopeFor,
+  optionalBuildingScopeWhere,
+  assertBuildingInScope,
+} from "@/lib/tenancy";
 import { helpOfferSchema } from "@/lib/validation";
 
 export type HelpFormState = { error?: string };
@@ -26,6 +31,12 @@ export async function createHelpOffer(
   }
   const data = parsed.data;
 
+  try {
+    await assertBuildingInScope(scopeFor(user), data.buildingId || null);
+  } catch {
+    return { error: "Bâtiment hors de votre résidence." };
+  }
+
   await prisma.helpOffer.create({
     data: {
       type: data.type,
@@ -43,7 +54,9 @@ export async function createHelpOffer(
 export async function toggleResolved(formData: FormData) {
   const user = await requireApproved();
   const id = formData.get("offerId")?.toString() ?? "";
-  const offer = await prisma.helpOffer.findUnique({ where: { id } });
+  const offer = await prisma.helpOffer.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id }] },
+  });
   if (!offer) redirect("/entraide");
   if (offer.authorId !== user.id && !isStaff(user.role)) {
     redirect("/entraide");
@@ -60,7 +73,9 @@ export async function toggleResolved(formData: FormData) {
 export async function deleteHelpOffer(formData: FormData) {
   const user = await requireApproved();
   const id = formData.get("offerId")?.toString() ?? "";
-  const offer = await prisma.helpOffer.findUnique({ where: { id } });
+  const offer = await prisma.helpOffer.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id }] },
+  });
   if (!offer) redirect("/entraide");
   if (offer.authorId !== user.id && !isStaff(user.role)) {
     redirect("/entraide");

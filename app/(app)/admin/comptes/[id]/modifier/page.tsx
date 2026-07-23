@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { rank } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, buildingScopeWhere, buildingsFor } from "@/lib/tenancy";
 import { Alert, Button, Card, Field, Input, Select } from "@/components/ui";
 import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
 import { updateUser } from "../../../actions";
@@ -23,17 +24,27 @@ export default async function ModifierVoisinPage({
   searchParams: Promise<{ editerror?: string }>;
 }) {
   const admin = await requireAdmin();
+  const scope = scopeFor(admin);
   const { t } = await getI18n();
   const { id } = await params;
   const { editerror } = await searchParams;
 
   const [user, buildings, units] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id },
+    prisma.user.findFirst({
+      // 404 hors résidence — mais un compte non encore rattaché reste éditable.
+      where: {
+        AND: [
+          scope.kind === "residence"
+            ? { OR: [{ residenceId: scope.residenceId }, { residenceId: null }] }
+            : {},
+          { id },
+        ],
+      },
       include: { unit: { include: { building: true } } },
     }),
-    prisma.building.findMany({ orderBy: { code: "asc" } }),
+    buildingsFor(scope),
     prisma.unit.findMany({
+      where: buildingScopeWhere(scope),
       orderBy: [{ floor: "asc" }, { label: "asc" }],
       include: { building: true },
     }),

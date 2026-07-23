@@ -1,17 +1,15 @@
 import { requireAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
-import { prisma } from "@/lib/db";
+import { scopeFor, buildingsFor } from "@/lib/tenancy";
 import { Card, PageHeader } from "@/components/ui";
 import AnnouncementForm from "./AnnouncementForm";
 
 export default async function NouvelleAnnoncePage() {
-  await requireAdmin();
+  const user = await requireAdmin();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
 
-  const buildings = await prisma.building.findMany({
-    orderBy: { code: "asc" },
-    select: { id: true, name: true },
-  });
+  const buildings = await buildingsFor(scope);
 
   return (
     <div className="mx-auto max-w-2xl">

@@ -3,16 +3,21 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
 import { isStaff } from "@/lib/roles";
+import { scopeFor } from "@/lib/tenancy";
 import { getResidenceName } from "@/lib/settings";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import BuildingsMap from "@/components/BuildingsMap";
 
 export default async function CartePage() {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
 
   const [buildings, residenceName] = await Promise.all([
     prisma.building.findMany({
+      // cloisonnement par résidence
+      where:
+        scope.kind === "residence" ? { residenceId: scope.residenceId } : {},
       orderBy: { code: "asc" },
       include: { residence: true },
     }),

@@ -4,6 +4,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, buildingScopeWhere } from "@/lib/tenancy";
 import { Alert, Badge, Button, Card, Select } from "@/components/ui";
 import {
   formatDateTime,
@@ -24,12 +25,14 @@ export default async function IncidentDetailPage({
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { id } = await params;
   const { ok, error } = await searchParams;
 
-  const incident = await prisma.incidentReport.findUnique({
-    where: { id },
+  const incident = await prisma.incidentReport.findFirst({
+    // 404 si le signalement est hors de la résidence de l'utilisateur.
+    where: { AND: [buildingScopeWhere(scope), { id }] },
     include: {
       building: true,
       unit: true,

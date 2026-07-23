@@ -1,6 +1,7 @@
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Card, PageHeader } from "@/components/ui";
 import ThreadForm from "./ThreadForm";
 
@@ -9,11 +10,13 @@ export default async function NouvelleDiscussionPage({
 }: {
   searchParams: Promise<{ categorie?: string }>;
 }) {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { categorie } = await searchParams;
 
   const categories = await prisma.forumCategory.findMany({
+    where: optionalBuildingScopeWhere(scope), // catégories de la résidence
     include: { building: true },
   });
 

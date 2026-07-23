@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireStaff, requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isStaff } from "@/lib/roles";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { postSchema, threadSchema } from "@/lib/validation";
 import { notifyResidents } from "@/lib/notifications";
 
@@ -26,10 +27,10 @@ export async function createThread(
   }
   const data = parsed.data;
 
-  const category = await prisma.forumCategory.findUnique({
-    where: { id: data.categoryId },
+  const category = await prisma.forumCategory.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: data.categoryId }] },
   });
-  if (!category) return { error: "Catégorie inconnue." };
+  if (!category) return { error: "Catégorie hors de votre résidence." };
 
   const thread = await prisma.forumThread.create({
     data: {
@@ -45,6 +46,7 @@ export async function createThread(
     message: `Nouvelle discussion : « ${data.title} »`,
     link: `/forum/${data.categoryId}/${thread.id}`,
     buildingId: category.buildingId,
+    residenceId: user.residenceId, // cloisonnement
     excludeUserId: user.id,
   });
 
@@ -52,13 +54,23 @@ export async function createThread(
   redirect(`/forum/${data.categoryId}/${thread.id}`);
 }
 
+/** Charge un fil borné à la résidence de l'utilisateur (null si hors périmètre). */
+function findThreadInScope(
+  user: { residenceId: string | null },
+  threadId: string,
+) {
+  return prisma.forumThread.findFirst({
+    where: {
+      AND: [{ category: optionalBuildingScopeWhere(scopeFor(user)) }, { id: threadId }],
+    },
+  });
+}
+
 export async function createPost(formData: FormData) {
   const user = await requireApproved();
   const threadId = formData.get("threadId")?.toString() ?? "";
 
-  const thread = await prisma.forumThread.findUnique({
-    where: { id: threadId },
-  });
+  const thread = await findThreadInScope(user, threadId);
   if (!thread) redirect("/forum");
 
   const parsed = postSchema.safeParse({
@@ -86,11 +98,9 @@ export async function createPost(formData: FormData) {
 }
 
 export async function toggleThreadLock(formData: FormData) {
-  await requireStaff();
+  const staff = await requireStaff();
   const threadId = formData.get("threadId")?.toString() ?? "";
-  const thread = await prisma.forumThread.findUnique({
-    where: { id: threadId },
-  });
+  const thread = await findThreadInScope(staff, threadId);
   if (!thread) redirect("/forum");
 
   await prisma.forumThread.update({
@@ -102,11 +112,9 @@ export async function toggleThreadLock(formData: FormData) {
 }
 
 export async function deleteThread(formData: FormData) {
-  await requireStaff();
+  const staff = await requireStaff();
   const threadId = formData.get("threadId")?.toString() ?? "";
-  const thread = await prisma.forumThread.findUnique({
-    where: { id: threadId },
-  });
+  const thread = await findThreadInScope(staff, threadId);
   if (!thread) redirect("/forum");
 
   await prisma.forumThread.delete({ where: { id: threadId } });
@@ -115,10 +123,15 @@ export async function deleteThread(formData: FormData) {
 }
 
 export async function deletePost(formData: FormData) {
-  await requireStaff();
+  const staff = await requireStaff();
   const postId = formData.get("postId")?.toString() ?? "";
-  const post = await prisma.forumPost.findUnique({
-    where: { id: postId },
+  const post = await prisma.forumPost.findFirst({
+    where: {
+      AND: [
+        { thread: { category: optionalBuildingScopeWhere(scopeFor(staff)) } },
+        { id: postId },
+      ],
+    },
     include: { thread: true },
   });
   if (!post) redirect("/forum");

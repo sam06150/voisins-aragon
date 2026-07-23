@@ -3,23 +3,26 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isManager } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Badge, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import { formatDateTime } from "@/lib/labels";
 
 export default async function ReunionsPage() {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const isAdmin = isManager(user.role);
   const now = new Date();
+  const scopeWhere = optionalBuildingScopeWhere(scope); // cloisonnement résidence
 
   const [upcoming, past] = await Promise.all([
     prisma.meeting.findMany({
-      where: { scheduledAt: { gte: now } },
+      where: { AND: [scopeWhere, { scheduledAt: { gte: now } }] },
       orderBy: { scheduledAt: "asc" },
       include: { building: true, _count: { select: { documents: true } } },
     }),
     prisma.meeting.findMany({
-      where: { scheduledAt: { lt: now } },
+      where: { AND: [scopeWhere, { scheduledAt: { lt: now } }] },
       orderBy: { scheduledAt: "desc" },
       include: { building: true, _count: { select: { documents: true } } },
     }),

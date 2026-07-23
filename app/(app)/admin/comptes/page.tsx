@@ -5,6 +5,12 @@ import { getI18n } from "@/lib/i18n";
 import { isAdmin, isManager, rank } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 import {
+  scopeFor,
+  buildingScopeWhere,
+  userScopeWhere,
+  buildingsFor,
+} from "@/lib/tenancy";
+import {
   Alert,
   Badge,
   Button,
@@ -44,6 +50,7 @@ export default async function AdminComptesPage({
   }>;
 }) {
   const admin = await requireStaff();
+  const scope = scopeFor(admin);
   const { t } = await getI18n();
   const manager = isManager(admin.role);
   const canManageRoles = isAdmin(admin.role);
@@ -61,21 +68,31 @@ export default async function AdminComptesPage({
 
   const notDeleted = { email: { not: { startsWith: DELETED_EMAIL_PREFIX } } };
 
+  const scopeUser = userScopeWhere(scope); // cloisonnement par résidence
+  // Les inscriptions en attente non encore rattachées (residenceId null,
+  // bâtiment tapé en texte libre) restent visibles par tout référent, qui les
+  // rattachera à la validation.
+  const pendingWhere =
+    scope.kind === "residence"
+      ? { OR: [{ residenceId: scope.residenceId }, { residenceId: null }] }
+      : {};
   const [pending, others, buildings, units] = await Promise.all([
     prisma.user.findMany({
-      where: { status: "PENDING", ...notDeleted },
+      where: { ...pendingWhere, status: "PENDING", ...notDeleted },
       orderBy: { createdAt: "asc" },
     }),
     prisma.user.findMany({
       where: {
+        ...scopeUser,
         status: { in: ["APPROVED", "REJECTED", "SUSPENDED"] },
         ...notDeleted,
       },
       include: { unit: { include: { building: true } } },
       orderBy: [{ status: "asc" }, { lastName: "asc" }],
     }),
-    prisma.building.findMany({ orderBy: { code: "asc" } }),
+    buildingsFor(scope),
     prisma.unit.findMany({
+      where: buildingScopeWhere(scope),
       orderBy: [{ floor: "asc" }, { label: "asc" }],
       include: { building: true },
     }),

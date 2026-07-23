@@ -2,6 +2,12 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import {
+  scopeFor,
+  buildingScopeWhere,
+  optionalBuildingScopeWhere,
+  userScopeWhere,
+} from "@/lib/tenancy";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 import {
   formatDate,
@@ -13,8 +19,10 @@ import {
 
 export default async function AccueilPage() {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const buildingId = user.unit?.buildingId ?? null;
+  const scopeWhere = optionalBuildingScopeWhere(scope); // cloisonnement résidence
 
   const buildingFilter = buildingId
     ? [{ buildingId: null }, { buildingId }]
@@ -25,37 +33,49 @@ export default async function AccueilPage() {
   const [announcements, incidents, nextMeeting, counts, onlineUsers] =
     await Promise.all([
       prisma.announcement.findMany({
-        where: { OR: buildingFilter },
+        where: { AND: [scopeWhere, { OR: buildingFilter }] },
         orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
         take: 3,
         // author non utilisé à l'affichage : on ne charge pas l'objet User.
         include: { building: true },
       }),
       prisma.incidentReport.findMany({
-        // Scoping : on ne montre que les signalements du bâtiment de l'utilisateur
-        // (évite d'exposer ceux des autres résidences sur le tableau de bord).
-        where: buildingId ? { buildingId } : {},
+        // Scoping : bâtiment de l'utilisateur, borné à sa résidence.
+        where: {
+          AND: [
+            buildingScopeWhere(scope),
+            buildingId ? { buildingId } : {},
+          ],
+        },
         orderBy: { createdAt: "desc" },
         take: 5,
         include: { building: true },
       }),
       prisma.meeting.findFirst({
         where: {
-          OR: buildingFilter,
-          scheduledAt: { gte: new Date() },
+          AND: [scopeWhere, { OR: buildingFilter, scheduledAt: { gte: new Date() } }],
         },
         orderBy: { scheduledAt: "asc" },
         include: { building: true },
       }),
       prisma.$transaction([
         prisma.incidentReport.count({
-          where: { status: { in: ["OUVERT", "EN_COURS"] } },
+          where: {
+            AND: [
+              buildingScopeWhere(scope),
+              { status: { in: ["OUVERT", "EN_COURS"] } },
+            ],
+          },
         }),
-        prisma.forumThread.count(),
-        prisma.document.count(),
+        prisma.forumThread.count({ where: { category: scopeWhere } }),
+        prisma.document.count({ where: scopeWhere }),
       ]),
       prisma.user.findMany({
-        where: { status: "APPROVED", lastSeenAt: { gte: onlineSince } },
+        where: {
+          ...userScopeWhere(scope),
+          status: "APPROVED",
+          lastSeenAt: { gte: onlineSince },
+        },
         select: {
           id: true,
           firstName: true,

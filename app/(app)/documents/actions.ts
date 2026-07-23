@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isStaff } from "@/lib/roles";
+import {
+  scopeFor,
+  optionalBuildingScopeWhere,
+  assertBuildingInScope,
+} from "@/lib/tenancy";
 import { documentMetaSchema } from "@/lib/validation";
 import { ALLOWED_MIME, deleteStoredFile, saveUploadedFile } from "@/lib/storage";
 
@@ -29,11 +34,20 @@ export async function createDocument(
   }
   const data = parsed.data;
 
-  // La réunion liée doit exister (sinon insertion FK P2003 → 500). Vérifié avant
-  // l'upload pour ne pas laisser de fichier orphelin.
+  // Empêche de publier dans la résidence d'un autre en forgeant le buildingId.
+  try {
+    await assertBuildingInScope(scopeFor(user), data.buildingId || null);
+  } catch {
+    return { error: "Bâtiment hors de votre résidence." };
+  }
+
+  // La réunion liée doit exister (sinon insertion FK P2003 → 500) et appartenir
+  // à la résidence. Vérifié avant l'upload pour ne pas laisser de fichier orphelin.
   if (data.meetingId) {
-    const meeting = await prisma.meeting.findUnique({
-      where: { id: data.meetingId },
+    const meeting = await prisma.meeting.findFirst({
+      where: {
+        AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: data.meetingId }],
+      },
     });
     if (!meeting) return { error: "Réunion introuvable." };
   }
@@ -72,7 +86,9 @@ export async function deleteDocument(formData: FormData) {
   const id = formData.get("documentId")?.toString() ?? "";
   if (!id) redirect("/documents");
 
-  const doc = await prisma.document.findUnique({ where: { id } });
+  const doc = await prisma.document.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id }] },
+  });
   if (!doc) redirect("/documents");
 
   // Seuls l'auteur ou un admin peuvent supprimer.

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Vidéo 2 — Les 5 phrases (Voisins Unis)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --crimson:#e11d48; --crimson-dark:#9f1239;
+    --amber:#fbbf24; --ink:#0c0c0d;
+  }
+  html,body{height:100%}
+  body{
+    background:#141416; overflow:hidden;
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  body.real{overflow:auto}
+
+  .wrap{
+    position:absolute; top:0; left:50%;
+    width:1080px; height:1920px;
+    transform:translateX(-50%) scale(var(--s,.4));
+    transform-origin:top center;
+  }
+  .stage{
+    position:absolute; inset:0; overflow:hidden;
+    background:radial-gradient(120% 80% at 50% 15%, #232329 0%, var(--ink) 60%, #000 100%);
+  }
+  .safe{position:absolute; left:0; right:0; top:150px; bottom:380px}
+
+  .scene{
+    position:absolute; inset:0; padding:0 80px;
+    display:flex; flex-direction:column; justify-content:center;
+    opacity:0;
+  }
+  .playing .scene{animation:scene var(--d) var(--t) both}
+  @keyframes scene{
+    0%{opacity:0; transform:translateY(34px)}
+    7%{opacity:1; transform:translateY(0)}
+    92%{opacity:1; transform:translateY(0)}
+    100%{opacity:0; transform:translateY(-18px)}
+  }
+
+  .t{color:#fff; font-weight:800; line-height:1.12; letter-spacing:-.01em}
+  .s1{font-size:72px}
+  .s2{font-size:100px}
+  .s3{font-size:140px}
+  .amber{color:var(--amber)}
+
+  /* --- Liste qui s'empile --- */
+  .item{
+    display:flex; gap:30px; align-items:flex-start;
+    background:rgba(255,255,255,.05); border:2px solid rgba(255,255,255,.09);
+    border-radius:26px; padding:30px 34px; margin-bottom:22px;
+    opacity:0; transform:translateX(-40px);
+  }
+  .playing .item{animation:pop .5s var(--t) both}
+  @keyframes pop{
+    0%{opacity:0; transform:translateX(-50px) scale(.96)}
+    60%{opacity:1; transform:translateX(6px) scale(1.02)}
+    100%{opacity:1; transform:translateX(0) scale(1)}
+  }
+  .item .n{
+    flex:0 0 auto; width:68px; height:68px; border-radius:50%;
+    background:var(--crimson); color:#fff; font-size:36px; font-weight:900;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .item p{font-size:46px; font-weight:700; color:#f0f0f4; line-height:1.22; font-style:italic}
+
+  /* La n°4 se met à clignoter avant la chute */
+  .playing .item.hot{animation:pop .5s var(--t) both, hot 1.6s 10.4s 2 both}
+  @keyframes hot{
+    0%,100%{border-color:rgba(255,255,255,.09); background:rgba(255,255,255,.05)}
+    50%{border-color:var(--amber); background:rgba(251,191,36,.16)}
+  }
+
+  /* --- Compteur --- */
+  .count{
+    font-size:230px; font-weight:900; color:var(--amber); line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .countlbl{font-size:48px; font-weight:800; color:#fff; margin-top:16px}
+  .bar{
+    margin-top:44px; height:26px; border-radius:13px; background:rgba(255,255,255,.12);
+    overflow:hidden;
+  }
+  .bar i{display:block; height:100%; width:2%; background:linear-gradient(90deg,var(--crimson),var(--amber))}
+
+  .flash{position:absolute; inset:0; background:linear-gradient(140deg,var(--crimson),var(--crimson-dark)); opacity:0}
+  .playing .flash{animation:flash 3.4s 12s both}
+  @keyframes flash{0%{opacity:0}8%{opacity:1}92%{opacity:1}100%{opacity:0}}
+
+  .outro{align-items:center; text-align:center}
+  .brand{font-size:88px; font-weight:900; color:#fff; line-height:1}
+  .slogan{font-size:50px; font-weight:800; color:var(--amber); margin-top:24px}
+  .url{margin-top:48px; background:var(--crimson); color:#fff; font-weight:800; font-size:46px; padding:26px 46px; border-radius:20px}
+  .sub{margin-top:28px; font-size:34px; color:#b9b9c2; font-weight:600}
+
+  .ctl{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    display:flex; gap:10px; align-items:center; justify-content:center;
+    padding:12px; background:rgba(10,10,12,.92); border-top:1px solid #2a2a30;
+    font-size:13px; color:#c9c9d2;
+  }
+  .ctl button{background:var(--crimson); color:#fff; border:0; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer}
+  .ctl button.alt{background:#2f2f38}
+  .ctl span{opacity:.7}
+  body.rec .ctl{opacity:.06}
+  body.rec .ctl:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="wrap">
+  <div class="stage" id="stage">
+    <div class="flash"></div>
+    <div class="safe">
+
+      <div class="scene" style="--t:0s;--d:2.6s">
+        <p class="t s2"><span class="amber">5 phrases</span><br>que tout locataire<br>a déjà entendues.</p>
+      </div>
+
+      <!-- La liste s'empile : une scène unique, items décalés. -->
+      <div class="scene" style="--t:2.6s;--d:9.4s">
+        <div class="item" style="--t:2.9s"><span class="n">1</span><p>«&nbsp;C&rsquo;est noté, on vous rappelle.&nbsp;»</p></div>
+        <div class="item" style="--t:4.4s"><span class="n">2</span><p>«&nbsp;Le prestataire doit passer.&nbsp;»</p></div>
+        <div class="item" style="--t:5.9s"><span class="n">3</span><p>«&nbsp;Ce n&rsquo;est pas de notre ressort.&nbsp;»</p></div>
+        <div class="item hot" style="--t:7.4s"><span class="n">4</span><p>«&nbsp;Vous êtes le seul à vous plaindre.&nbsp;»</p></div>
+        <div class="item" style="--t:8.9s"><span class="n">5</span><p>«&nbsp;Il faut faire un recommandé.&nbsp;»</p></div>
+      </div>
+
+      <div class="scene" style="--t:12s;--d:3.4s">
+        <p class="t s2">La n°4,<br>c&rsquo;est un<br><span style="color:#ffe08a">mensonge.</span></p>
+      </div>
+
+      <div class="scene" style="--t:15.4s;--d:5.4s">
+        <p class="t s3" style="font-size:110px;margin-bottom:40px">Prouve-le.</p>
+        <div class="count" id="count">1</div>
+        <div class="countlbl">signalement sur le même problème</div>
+        <div class="bar"><i id="bar"></i></div>
+      </div>
+
+      <div class="scene outro" style="--t:20.8s;--d:5s">
+        <div class="brand">VOISINS UNIS</div>
+        <div class="slogan">Ensemble,<br>on pèse plus lourd.</div>
+        <div class="url">Lien en bio</div>
+        <div class="sub">Référent ou locataire — les deux comptent.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="ctl">
+  <button id="play">▶ Lancer (3 s)</button>
+  <button class="alt" id="size">Taille réelle 1080×1920</button>
+  <button class="alt" id="hide">Masquer les contrôles</button>
+  <span id="clock">0.0 s / 25.8 s</span>
+</div>
+
+<script>
+(function () {
+  const stage = document.getElementById("stage");
+  const clock = document.getElementById("clock");
+  const countEl = document.getElementById("count");
+  const barEl = document.getElementById("bar");
+  const TOTAL = 25.8;
+  const COUNT_AT = 16.2, COUNT_DUR = 3.2, COUNT_TO = 47;
+  let real = false, timer = null, raf = null;
+
+  function fit() {
+    if (real) { document.body.style.setProperty("--s", 1); return; }
+    const s = Math.min((innerHeight - 70) / 1920, (innerWidth - 30) / 1080);
+    document.body.style.setProperty("--s", s);
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // Compteur 1 → 47, synchronisé sur l'horloge de la timeline.
+  function runCounter(t0) {
+    cancelAnimationFrame(raf);
+    const tick = () => {
+      const t = (performance.now() - t0) / 1000 - COUNT_AT;
+      if (t < 0) { raf = requestAnimationFrame(tick); return; }
+      const p = Math.min(1, t / COUNT_DUR);
+      const eased = 1 - Math.pow(1 - p, 3);
+      countEl.textContent = Math.max(1, Math.round(eased * COUNT_TO));
+      barEl.style.width = (2 + eased * 98) + "%";
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    countEl.textContent = "1";
+    barEl.style.width = "2%";
+    raf = requestAnimationFrame(tick);
+  }
+
+  function play() {
+    stage.classList.remove("playing");
+    void stage.offsetWidth;
+    clearInterval(timer);
+    let n = 3;
+    clock.textContent = "Départ dans " + n + "…";
+    const cd = setInterval(() => {
+      n--;
+      if (n > 0) { clock.textContent = "Départ dans " + n + "…"; return; }
+      clearInterval(cd);
+      stage.classList.add("playing");
+      const t0 = performance.now();
+      runCounter(t0);
+      timer = setInterval(() => {
+        const t = (performance.now() - t0) / 1000;
+        clock.textContent = t.toFixed(1) + " s / " + TOTAL + " s";
+        if (t >= TOTAL) { clearInterval(timer); clock.textContent = "Terminé — " + TOTAL + " s"; }
+      }, 100);
+    }, 1000);
+  }
+
+  document.getElementById("play").onclick = play;
+  document.getElementById("size").onclick = () => {
+    real = !real; document.body.classList.toggle("real", real); fit();
+  };
+  document.getElementById("hide").onclick = () => document.body.classList.toggle("rec");
+})();
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isAdmin, isManager, rank } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor } from "@/lib/tenancy";
 import {
   Alert,
   Badge,
@@ -54,14 +55,25 @@ export default async function VoisinFichePage({
   searchParams: Promise<{ editok?: string; editerror?: string }>;
 }) {
   const admin = await requireStaff();
+  const scope = scopeFor(admin);
   const { t } = await getI18n();
   const { id } = await params;
   const { editok, editerror } = await searchParams;
   const manager = isManager(admin.role);
   const canManageRoles = isAdmin(admin.role);
 
-  const user = await prisma.user.findUnique({
-    where: { id },
+  const user = await prisma.user.findFirst({
+    // 404 si le compte est hors de la résidence de l'administrateur — mais un
+    // compte non encore rattaché (residenceId null, inscription à valider) reste
+    // accessible pour pouvoir le traiter.
+    where: {
+      AND: [
+        scope.kind === "residence"
+          ? { OR: [{ residenceId: scope.residenceId }, { residenceId: null }] }
+          : {},
+        { id },
+      ],
+    },
     include: {
       unit: { include: { building: { include: { residence: true } } } },
       _count: {

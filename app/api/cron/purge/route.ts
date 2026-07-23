@@ -9,6 +9,7 @@ import { anonymizedUserData } from "@/lib/accounts";
  *
  * - Comptes en attente > 12 mois : supprimés (jamais validés, sans contribution).
  * - Comptes approuvés inactifs > 3 ans : anonymisés (hors administrateurs).
+ * - Candidatures publiques (JoinRequest) > 12 mois : supprimées.
  */
 export async function POST(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -27,6 +28,12 @@ export async function POST(request: Request) {
     //    rattachée → suppression définitive sans risque d'intégrité).
     const pending = await prisma.user.deleteMany({
       where: { status: "PENDING", createdAt: { lt: twelveMonthsAgo } },
+    });
+
+    // 1 bis) Candidatures publiques (« Rejoindre » / « Devenir référent ») non
+    //        transformées en compte depuis > 12 mois : suppression définitive.
+    const joinRequests = await prisma.joinRequest.deleteMany({
+      where: { createdAt: { lt: twelveMonthsAgo } },
     });
 
     // 2) Comptes approuvés inactifs depuis > 3 ans → anonymisation (on conserve
@@ -58,6 +65,7 @@ export async function POST(request: Request) {
     return Response.json({
       ok: true,
       pendingDeleted: pending.count,
+      joinRequestsDeleted: joinRequests.count,
       inactiveAnonymized: inactive.length,
     });
   } catch (err) {

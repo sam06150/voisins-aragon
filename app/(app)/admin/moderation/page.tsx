@@ -2,16 +2,19 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Badge, Button, Card, EmptyState } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDateTime } from "@/lib/labels";
 import { deleteThread, toggleThreadLock } from "../../forum/actions";
 
 export default async function AdminModerationPage() {
-  await requireStaff();
+  const admin = await requireStaff();
+  const scope = scopeFor(admin);
   const { t } = await getI18n();
 
   const threads = await prisma.forumThread.findMany({
+    where: { category: optionalBuildingScopeWhere(scope) }, // résidence
     include: {
       author: { select: { id: true, firstName: true, lastName: true } },
       category: { include: { building: true } },

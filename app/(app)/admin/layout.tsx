@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { requireStaff } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
@@ -7,6 +8,7 @@ import { isManager, isAdmin } from "@/lib/roles";
 const ADMIN_LINKS = [
   { href: "/admin", label: "Tableau de bord", min: "staff" as const },
   { href: "/admin/comptes", label: "Comptes", min: "staff" as const },
+  { href: "/admin/candidatures", label: "Candidatures", min: "staff" as const },
   { href: "/admin/moderation", label: "Modération forum", min: "staff" as const },
   { href: "/admin/immeubles", label: "Bâtiments & logements", min: "manager" as const },
 ];
@@ -17,6 +19,13 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   const user = await requireStaff();
+
+  // Porte : tout membre du staff doit avoir accepté la charte du référent avant
+  // d'accéder à l'espace d'administration (consentement horodaté, RGPD).
+  if (!user.moderatorCharterAt) {
+    redirect("/charte-referent");
+  }
+
   const { t } = await getI18n();
   const manager = isManager(user.role);
   const admin = isAdmin(user.role);

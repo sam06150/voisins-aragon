@@ -2,14 +2,17 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Badge, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import { formatDate } from "@/lib/labels";
 
 export default async function PetitionsPage() {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
 
   const petitions = await prisma.petition.findMany({
+    where: optionalBuildingScopeWhere(scope), // cloisonnement par résidence
     include: {
       building: true,
       author: { select: { id: true, firstName: true, lastName: true } },

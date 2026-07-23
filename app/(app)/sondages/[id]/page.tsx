@@ -4,6 +4,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Badge, Card } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate } from "@/lib/labels";
@@ -15,11 +16,13 @@ export default async function SondageDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { id } = await params;
 
-  const poll = await prisma.poll.findUnique({
-    where: { id },
+  const poll = await prisma.poll.findFirst({
+    // 404 si le sondage est hors de la résidence de l'utilisateur.
+    where: { AND: [optionalBuildingScopeWhere(scope), { id }] },
     include: {
       building: true,
       author: { select: { id: true, firstName: true, lastName: true } },

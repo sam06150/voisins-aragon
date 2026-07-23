@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, userScopeWhere } from "@/lib/tenancy";
 import { Button, Card, Textarea } from "@/components/ui";
 import { formatDateTime } from "@/lib/labels";
 import { replyMessage } from "../actions";
@@ -13,11 +14,12 @@ export default async function ConversationPage({
   params: Promise<{ userId: string }>;
 }) {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { userId: partnerId } = await params;
 
   const partner = await prisma.user.findFirst({
-    where: { id: partnerId, status: "APPROVED" },
+    where: { ...userScopeWhere(scope), id: partnerId, status: "APPROVED" },
   });
   if (!partner) notFound();
 

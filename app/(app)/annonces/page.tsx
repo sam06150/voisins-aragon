@@ -2,6 +2,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isManager } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate } from "@/lib/labels";
@@ -9,6 +10,7 @@ import { deleteAnnouncement } from "./actions";
 
 export default async function AnnoncesPage() {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const isAdmin = isManager(user.role);
   const buildingId = user.unit?.buildingId ?? null;
@@ -17,9 +19,15 @@ export default async function AnnoncesPage() {
     ? [{ buildingId: null }, { buildingId }]
     : [{ buildingId: null }];
 
-  // Les admins voient toutes les annonces pour pouvoir les gérer.
+  // Les admins voient toutes les annonces de LEUR résidence pour les gérer ;
+  // le cloisonnement par résidence s'applique dans tous les cas.
   const announcements = await prisma.announcement.findMany({
-    where: isAdmin ? {} : { OR: buildingFilter },
+    where: {
+      AND: [
+        optionalBuildingScopeWhere(scope),
+        isAdmin ? {} : { OR: buildingFilter },
+      ],
+    },
     orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
     include: {
       building: true,

@@ -1,21 +1,29 @@
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, buildingScopeWhere } from "@/lib/tenancy";
 import { PageHeader } from "@/components/ui";
 import { formatDate, incidentCategoryLabels } from "@/lib/labels";
 import LetterEditor from "./LetterEditor";
 
 export default async function CourrierPage() {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
 
   const buildingId = user.unit?.buildingId ?? null;
 
-  // Problèmes en cours à mentionner dans la lettre (bâtiment du locataire).
+  // Problèmes en cours à mentionner dans la lettre (bâtiment du locataire,
+  // borné à sa résidence).
   const incidents = await prisma.incidentReport.findMany({
     where: {
-      status: { in: ["OUVERT", "EN_COURS"] },
-      ...(buildingId ? { buildingId } : {}),
+      AND: [
+        buildingScopeWhere(scope),
+        {
+          status: { in: ["OUVERT", "EN_COURS"] },
+          ...(buildingId ? { buildingId } : {}),
+        },
+      ],
     },
     orderBy: { createdAt: "desc" },
     take: 20,

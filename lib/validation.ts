@@ -48,6 +48,41 @@ export const signupSchema = z.object({
   },
 );
 
+/**
+ * Candidature publique (page /rejoindre et /referent).
+ *
+ * Deux profils, un seul formulaire : REFERENT (ouvre l'espace de sa résidence)
+ * et LOCATAIRE (rejoint l'espace, ou demande son ouverture). Les deux comptent :
+ * un référent sans locataires ne pèse rien face au bailleur.
+ */
+export const joinRequestSchema = z.object({
+  kind: z.enum(["REFERENT", "LOCATAIRE"]),
+  firstName: z.string().trim().min(1, "Prénom requis").max(60),
+  lastName: z.string().trim().min(1, "Nom requis").max(60),
+  email: z.string().trim().toLowerCase().email("Adresse e-mail invalide"),
+  phone: z.string().trim().max(30).optional().or(z.literal("")),
+  city: z.string().trim().min(1, "Ville requise").max(80),
+  postalCode: z.string().trim().max(12).optional().or(z.literal("")),
+  country: z.string().trim().min(2, "Pays requis").max(2),
+  landlord: z.string().trim().max(80).optional().or(z.literal("")),
+  residenceName: z
+    .string()
+    .trim()
+    .min(1, "Nom de la résidence requis")
+    .max(120),
+  buildingName: z.string().trim().max(80).optional().or(z.literal("")),
+  message: z.string().trim().max(2000).optional().or(z.literal("")),
+  consent: z.literal(true, {
+    message: "Vous devez accepter la politique de confidentialité",
+  }),
+});
+
+export const joinRequestStatusSchema = z.object({
+  id: z.string().trim().min(1),
+  status: z.enum(["NOUVEAU", "CONTACTE", "ACCEPTE", "REFUSE"]),
+  handledNote: z.string().trim().max(2000).optional().or(z.literal("")),
+});
+
 export const loginSchema = z.object({
   // Identifiant : e-mail (locataires) OU nom d'utilisateur (comptes internes).
   email: z.string().trim().toLowerCase().min(1, "Identifiant requis"),

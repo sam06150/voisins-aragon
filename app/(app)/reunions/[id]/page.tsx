@@ -4,6 +4,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isManager } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { publicFileUrl } from "@/lib/storage";
 import { Alert, Badge, Button, Card, LinkButton, Textarea } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
@@ -22,13 +23,15 @@ export default async function ReunionDetailPage({
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const isAdmin = isManager(user.role);
   const { id } = await params;
   const { ok, error } = await searchParams;
 
-  const meeting = await prisma.meeting.findUnique({
-    where: { id },
+  const meeting = await prisma.meeting.findFirst({
+    // 404 si la réunion est hors de la résidence de l'utilisateur.
+    where: { AND: [optionalBuildingScopeWhere(scope), { id }] },
     include: {
       building: true,
       author: { select: { id: true, firstName: true, lastName: true } },

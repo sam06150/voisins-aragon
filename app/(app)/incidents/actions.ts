@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { requireStaff, requireApproved } from "@/lib/auth";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import {
+  scopeFor,
+  buildingScopeWhere,
+  assertBuildingInScope,
+} from "@/lib/tenancy";
 import { incidentSchema, incidentStatusSchema } from "@/lib/validation";
 import { ALLOWED_MIME, deleteStoredFile, saveUploadedFile } from "@/lib/storage";
 
@@ -34,6 +39,12 @@ export async function createIncident(
     where: { id: data.buildingId },
   });
   if (!building) return { error: "Bâtiment inconnu." };
+  // Empêche de signaler dans la résidence d'un autre en forgeant le buildingId.
+  try {
+    await assertBuildingInScope(scopeFor(user), data.buildingId);
+  } catch {
+    return { error: "Bâtiment hors de votre résidence." };
+  }
 
   // Pré-validation des photos avant toute écriture en base.
   const files = formData
@@ -90,6 +101,13 @@ export async function toggleSupport(formData: FormData) {
   const incidentId = formData.get("incidentId")?.toString() ?? "";
   if (!incidentId) redirect("/incidents");
 
+  // On ne soutient qu'un signalement de sa propre résidence.
+  const inScope = await prisma.incidentReport.findFirst({
+    where: { AND: [buildingScopeWhere(scopeFor(user)), { id: incidentId }] },
+    select: { id: true },
+  });
+  if (!inScope) redirect("/incidents");
+
   const existing = await prisma.incidentSupport.findUnique({
     where: { incidentId_userId: { incidentId, userId: user.id } },
   });
@@ -115,7 +133,7 @@ export async function toggleSupport(formData: FormData) {
 }
 
 export async function updateIncidentStatus(formData: FormData) {
-  await requireStaff();
+  const staff = await requireStaff();
 
   const incidentId = formData.get("incidentId")?.toString() ?? "";
   const parsed = incidentStatusSchema.safeParse({
@@ -124,6 +142,13 @@ export async function updateIncidentStatus(formData: FormData) {
   if (!incidentId || !parsed.success) {
     redirect(`/incidents/${incidentId}?error=1`);
   }
+
+  // Un modérateur ne modère que les signalements de sa résidence.
+  const inScope = await prisma.incidentReport.findFirst({
+    where: { AND: [buildingScopeWhere(scopeFor(staff)), { id: incidentId }] },
+    select: { id: true },
+  });
+  if (!inScope) redirect("/incidents");
 
   await prisma.incidentReport.update({
     where: { id: incidentId },
@@ -144,8 +169,9 @@ export async function deleteIncident(formData: FormData) {
   const incidentId = formData.get("incidentId")?.toString() ?? "";
   if (!incidentId) redirect("/incidents");
 
-  const incident = await prisma.incidentReport.findUnique({
-    where: { id: incidentId },
+  const incident = await prisma.incidentReport.findFirst({
+    // borné à la résidence de l'utilisateur
+    where: { AND: [buildingScopeWhere(scopeFor(user)), { id: incidentId }] },
     include: { photos: true },
   });
   if (!incident) redirect("/incidents");

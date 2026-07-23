@@ -1,6 +1,13 @@
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import {
+  scopeFor,
+  buildingScopeWhere,
+  optionalBuildingScopeWhere,
+  userScopeWhere,
+  buildingsFor,
+} from "@/lib/tenancy";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import {
   incidentCategoryLabels,
@@ -37,10 +44,13 @@ function Bar({
 }
 
 export default async function StatistiquesPage() {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
 
-  const buildings = await prisma.building.findMany({ orderBy: { code: "asc" } });
+  const buildings = await buildingsFor(scope);
+  const incidentWhere = buildingScopeWhere(scope); // cloisonnement résidence
+  const scopeWhere = optionalBuildingScopeWhere(scope);
 
   const [
     byBuilding,
@@ -55,22 +65,27 @@ export default async function StatistiquesPage() {
   ] = await Promise.all([
     prisma.incidentReport.groupBy({
       by: ["buildingId"],
+      where: incidentWhere,
       _count: { _all: true },
     }),
     prisma.incidentReport.groupBy({
       by: ["category"],
+      where: incidentWhere,
       _count: { _all: true },
     }),
     prisma.incidentReport.groupBy({
       by: ["status"],
+      where: incidentWhere,
       _count: { _all: true },
     }),
-    prisma.incidentReport.count(),
-    prisma.user.count({ where: { status: "APPROVED" } }),
-    prisma.petition.count(),
-    prisma.petitionSignature.count(),
-    prisma.forumThread.count(),
-    prisma.forumPost.count(),
+    prisma.incidentReport.count({ where: incidentWhere }),
+    prisma.user.count({
+      where: { ...userScopeWhere(scope), status: "APPROVED" },
+    }),
+    prisma.petition.count({ where: scopeWhere }),
+    prisma.petitionSignature.count({ where: { petition: scopeWhere } }),
+    prisma.forumThread.count({ where: { category: scopeWhere } }),
+    prisma.forumPost.count({ where: { thread: { category: scopeWhere } } }),
   ]);
 
   const buildingCounts = buildings.map((b) => ({

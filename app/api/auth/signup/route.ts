@@ -38,13 +38,18 @@ export async function POST(request: Request) {
 
   // Si un bâtiment existant est sélectionné, on vérifie qu'il existe.
   // Sinon le locataire a tapé le nom de son bâtiment (résolu par l'admin).
+  // Cloisonnement : si un bâtiment existant est choisi, on rattache d'emblée le
+  // compte à sa résidence. Sinon residenceId reste null jusqu'à la validation.
+  let residenceId: string | null = null;
   if (data.buildingId) {
     const building = await prisma.building.findUnique({
       where: { id: data.buildingId },
+      select: { id: true, residenceId: true },
     });
     if (!building) {
       return NextResponse.json({ error: "Bâtiment inconnu." }, { status: 400 });
     }
+    residenceId = building.residenceId;
   }
 
   const existing = await prisma.user.findUnique({
@@ -70,6 +75,7 @@ export async function POST(request: Request) {
         signupBuildingName: data.buildingName ? data.buildingName : null,
         signupBuildingId: data.buildingId ? data.buildingId : null,
         signupUnitLabel: data.unitLabel,
+        residenceId, // cloisonnement : déduit du bâtiment choisi (sinon null)
         consentAt: new Date(),
         status: "PENDING",
         role: "TENANT",

@@ -3,6 +3,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere, buildingsFor } from "@/lib/tenancy";
 import type { HelpType } from "@prisma/client";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
@@ -16,6 +17,7 @@ export default async function EntraidePage({
   searchParams: Promise<{ type?: string }>;
 }) {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { type } = await searchParams;
   const typeFilter =
@@ -23,17 +25,19 @@ export default async function EntraidePage({
 
   const [offers, buildings] = await Promise.all([
     prisma.helpOffer.findMany({
-      where: typeFilter ? { type: typeFilter } : {},
+      where: {
+        AND: [
+          optionalBuildingScopeWhere(scope), // cloisonnement par résidence
+          typeFilter ? { type: typeFilter } : {},
+        ],
+      },
       include: {
         building: true,
         author: { select: { id: true, firstName: true, lastName: true } },
       },
       orderBy: [{ resolved: "asc" }, { createdAt: "desc" }],
     }),
-    prisma.building.findMany({
-      orderBy: { code: "asc" },
-      select: { id: true, name: true },
-    }),
+    buildingsFor(scope),
   ]);
 
   return (

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Vidéo 3 — Les deux rôles (Voisins Unis)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --crimson:#e11d48; --crimson-dark:#9f1239;
+    --amber:#fbbf24; --ink:#0c0c0d;
+  }
+  html,body{height:100%}
+  body{
+    background:#141416; overflow:hidden;
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  body.real{overflow:auto}
+
+  .wrap{
+    position:absolute; top:0; left:50%;
+    width:1080px; height:1920px;
+    transform:translateX(-50%) scale(var(--s,.4));
+    transform-origin:top center;
+  }
+  .stage{
+    position:absolute; inset:0; overflow:hidden;
+    background:radial-gradient(120% 80% at 50% 18%, #24242a 0%, var(--ink) 62%, #000 100%);
+  }
+  .safe{position:absolute; left:0; right:0; top:150px; bottom:380px}
+
+  .scene{
+    position:absolute; inset:0; padding:0 80px;
+    display:flex; flex-direction:column; justify-content:center;
+    opacity:0;
+  }
+  .playing .scene{animation:scene var(--d) var(--t) both}
+  @keyframes scene{
+    0%{opacity:0; transform:translateY(36px) scale(.975)}
+    6%{opacity:1; transform:translateY(0) scale(1)}
+    93%{opacity:1; transform:translateY(0) scale(1)}
+    100%{opacity:0; transform:translateY(-20px) scale(1.015)}
+  }
+
+  .t{color:#fff; font-weight:800; line-height:1.12; letter-spacing:-.01em}
+  .s2{font-size:96px}
+  .s3{font-size:124px}
+  .amber{color:var(--amber)}
+
+  /* --- Cartes de rôle --- */
+  .card{border-radius:38px; padding:56px 52px}
+  .card.ref{background:linear-gradient(150deg,#fff1f4,#ffe0e7); border:6px solid var(--crimson)}
+  .card.loc{background:linear-gradient(150deg,#1d1d22,#111114); border:6px solid var(--amber)}
+  .badge{
+    display:inline-block; font-size:30px; font-weight:900; letter-spacing:.16em;
+    text-transform:uppercase; padding:14px 26px; border-radius:999px; margin-bottom:30px;
+  }
+  .card.ref .badge{background:var(--crimson); color:#fff}
+  .card.loc .badge{background:var(--amber); color:#1a1a1a}
+  .card h2{font-size:92px; font-weight:900; line-height:1; margin-bottom:26px}
+  .card.ref h2{color:#7f0f2e}
+  .card.loc h2{color:#fff}
+  .card ul{list-style:none}
+  .card li{
+    font-size:44px; font-weight:700; line-height:1.35; padding:14px 0 14px 54px;
+    position:relative;
+  }
+  .card.ref li{color:#4a1020}
+  .card.loc li{color:#e8e8ee}
+  .card li::before{
+    content:"›"; position:absolute; left:8px; top:8px;
+    font-size:52px; font-weight:900;
+  }
+  .card.ref li::before{color:var(--crimson)}
+  .card.loc li::before{color:var(--amber)}
+  .card .punch{
+    margin-top:30px; font-size:46px; font-weight:900; line-height:1.25;
+    padding-top:26px; border-top:4px solid rgba(0,0,0,.12);
+  }
+  .card.ref .punch{color:var(--crimson)}
+  .card.loc .punch{color:var(--amber); border-top-color:rgba(255,255,255,.14)}
+
+  /* --- Compteur de bascule --- */
+  .count{font-size:250px; font-weight:900; color:var(--amber); line-height:1; font-variant-numeric:tabular-nums; text-align:center}
+  .countlbl{font-size:46px; font-weight:800; color:#fff; text-align:center; margin-top:14px}
+  .bar{margin:44px 0 0; height:28px; border-radius:14px; background:rgba(255,255,255,.12); overflow:hidden}
+  .bar i{display:block; height:100%; width:2%; background:linear-gradient(90deg,var(--crimson),var(--amber))}
+  .verdict{margin-top:52px; font-size:56px; font-weight:800; color:#fff; text-align:center; line-height:1.25}
+
+  .flash{position:absolute; inset:0; background:linear-gradient(140deg,var(--crimson),var(--crimson-dark)); opacity:0}
+  .playing .flash{animation:flash 6s 24s both}
+  @keyframes flash{0%{opacity:0}5%{opacity:1}95%{opacity:1}100%{opacity:0}}
+
+  .outro{align-items:center; text-align:center}
+  .split{font-size:74px; font-weight:900; color:#fff; line-height:1.2}
+  .split b{color:var(--amber)}
+  .brand{font-size:70px; font-weight:900; color:#fff; margin-top:56px; letter-spacing:.02em}
+  .url{margin-top:38px; background:#fff; color:var(--crimson); font-weight:900; font-size:46px; padding:26px 46px; border-radius:20px}
+  .sub{margin-top:26px; font-size:34px; color:rgba(255,255,255,.85); font-weight:600}
+
+  .ctl{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    display:flex; gap:10px; align-items:center; justify-content:center;
+    padding:12px; background:rgba(10,10,12,.92); border-top:1px solid #2a2a30;
+    font-size:13px; color:#c9c9d2;
+  }
+  .ctl button{background:var(--crimson); color:#fff; border:0; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer}
+  .ctl button.alt{background:#2f2f38}
+  .ctl span{opacity:.7}
+  body.rec .ctl{opacity:.06}
+  body.rec .ctl:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="wrap">
+  <div class="stage" id="stage">
+    <div class="flash"></div>
+    <div class="safe">
+
+      <div class="scene" style="--t:0s;--d:3.2s">
+        <p class="t s2">Il y a <span class="amber">deux façons</span><br>d&rsquo;aider.</p>
+        <p class="t s2" style="margin-top:34px;font-size:74px">Les deux comptent.</p>
+      </div>
+
+      <div class="scene" style="--t:3.2s;--d:6s">
+        <div class="card ref">
+          <span class="badge">Rôle 1 — un par bâtiment</span>
+          <h2>Le référent</h2>
+          <ul>
+            <li>Il ouvre l&rsquo;espace de la résidence</li>
+            <li>Il vérifie que t&rsquo;habites bien là</li>
+            <li>10 minutes par semaine, bénévole</li>
+          </ul>
+          <p class="punch">Sans lui,<br>le bâtiment reste fermé.</p>
+        </div>
+      </div>
+
+      <div class="scene" style="--t:9.2s;--d:6.8s">
+        <div class="card loc">
+          <span class="badge">Rôle 2 — le plus possible</span>
+          <h2>Le locataire</h2>
+          <ul>
+            <li>Tu t&rsquo;inscris en une minute</li>
+            <li>Tu confirmes les problèmes que tu vis aussi</li>
+            <li>Tu signes, tu votes, tu comptes</li>
+          </ul>
+          <p class="punch">Toi,<br>tu fais le nombre.</p>
+        </div>
+      </div>
+
+      <div class="scene" style="--t:16s;--d:8s">
+        <div class="count" id="count">1</div>
+        <div class="countlbl">signalement daté sur le même problème</div>
+        <div class="bar"><i id="bar"></i></div>
+        <p class="verdict" id="verdict">Un seul&nbsp;?<br>Le bailleur s&rsquo;en fout.</p>
+      </div>
+
+      <div class="scene outro" style="--t:24s;--d:6s">
+        <p class="split">Le référent<br>ouvre la porte.</p>
+        <p class="split" style="margin-top:30px">Les locataires<br><b>font le poids.</b></p>
+        <div class="brand">VOISINS UNIS</div>
+        <div class="url">Lien en bio</div>
+        <div class="sub">Choisis ton rôle · Gratuit · Réservé aux locataires</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="ctl">
+  <button id="play">▶ Lancer (3 s)</button>
+  <button class="alt" id="size">Taille réelle 1080×1920</button>
+  <button class="alt" id="hide">Masquer les contrôles</button>
+  <span id="clock">0.0 s / 30 s</span>
+</div>
+
+<script>
+(function () {
+  const stage = document.getElementById("stage");
+  const clock = document.getElementById("clock");
+  const countEl = document.getElementById("count");
+  const barEl = document.getElementById("bar");
+  const verdictEl = document.getElementById("verdict");
+  const TOTAL = 30;
+  const COUNT_AT = 16.8, COUNT_DUR = 3.6, COUNT_TO = 43;
+  let real = false, timer = null, raf = null;
+
+  function fit() {
+    if (real) { document.body.style.setProperty("--s", 1); return; }
+    const s = Math.min((innerHeight - 70) / 1920, (innerWidth - 30) / 1080);
+    document.body.style.setProperty("--s", s);
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // Compteur 1 → 43 puis bascule du verdict : c'est le nœud de la vidéo.
+  function runCounter(t0) {
+    cancelAnimationFrame(raf);
+    const tick = () => {
+      const t = (performance.now() - t0) / 1000 - COUNT_AT;
+      if (t < 0) { raf = requestAnimationFrame(tick); return; }
+      const p = Math.min(1, t / COUNT_DUR);
+      const eased = 1 - Math.pow(1 - p, 3);
+      countEl.textContent = Math.max(1, Math.round(eased * COUNT_TO));
+      barEl.style.width = (2 + eased * 98) + "%";
+      if (p >= 1) {
+        verdictEl.innerHTML = "Quarante-trois&nbsp;?<br>Il ne peut plus.";
+        verdictEl.style.color = "#fbbf24";
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    countEl.textContent = "1";
+    barEl.style.width = "2%";
+    verdictEl.innerHTML = "Un seul&nbsp;?<br>Le bailleur s&rsquo;en fout.";
+    verdictEl.style.color = "#fff";
+    raf = requestAnimationFrame(tick);
+  }
+
+  function play() {
+    stage.classList.remove("playing");
+    void stage.offsetWidth;
+    clearInterval(timer);
+    let n = 3;
+    clock.textContent = "Départ dans " + n + "…";
+    const cd = setInterval(() => {
+      n--;
+      if (n > 0) { clock.textContent = "Départ dans " + n + "…"; return; }
+      clearInterval(cd);
+      stage.classList.add("playing");
+      const t0 = performance.now();
+      runCounter(t0);
+      timer = setInterval(() => {
+        const t = (performance.now() - t0) / 1000;
+        clock.textContent = t.toFixed(1) + " s / " + TOTAL + " s";
+        if (t >= TOTAL) { clearInterval(timer); clock.textContent = "Terminé — " + TOTAL + " s"; }
+      }, 100);
+    }, 1000);
+  }
+
+  document.getElementById("play").onclick = play;
+  document.getElementById("size").onclick = () => {
+    real = !real; document.body.classList.toggle("real", real); fit();
+  };
+  document.getElementById("hide").onclick = () => document.body.classList.toggle("rec");
+})();
+</script>
+</body>
+</html>

@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireManager } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  scopeFor,
+  optionalBuildingScopeWhere,
+  assertBuildingInScope,
+} from "@/lib/tenancy";
 import { landlordStepSchema } from "@/lib/validation";
 
 export type StepFormState = { error?: string };
@@ -29,6 +34,12 @@ export async function createStep(
   const when = new Date(data.occurredAt);
   if (Number.isNaN(when.getTime())) return { error: "Date invalide." };
 
+  try {
+    await assertBuildingInScope(scopeFor(admin), data.buildingId || null);
+  } catch {
+    return { error: "Bâtiment hors de votre résidence." };
+  }
+
   await prisma.landlordStep.create({
     data: {
       title: data.title,
@@ -45,9 +56,15 @@ export async function createStep(
 }
 
 export async function deleteStep(formData: FormData) {
-  await requireManager();
+  const admin = await requireManager();
   const id = formData.get("stepId")?.toString() ?? "";
-  if (id) await prisma.landlordStep.delete({ where: { id } });
+  if (id) {
+    const inScope = await prisma.landlordStep.findFirst({
+      where: { AND: [optionalBuildingScopeWhere(scopeFor(admin)), { id }] },
+      select: { id: true },
+    });
+    if (inScope) await prisma.landlordStep.delete({ where: { id } });
+  }
   revalidatePath("/demarches");
   redirect("/demarches");
 }

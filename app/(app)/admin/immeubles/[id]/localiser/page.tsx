@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireManager } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor } from "@/lib/tenancy";
 import { Card, PageHeader } from "@/components/ui";
 import LocationPicker from "./LocationPicker";
 
@@ -11,11 +12,18 @@ export default async function LocaliserPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireManager();
+  const admin = await requireManager();
+  const scope = scopeFor(admin);
   const { t } = await getI18n();
   const { id } = await params;
 
-  const building = await prisma.building.findUnique({ where: { id } });
+  const building = await prisma.building.findFirst({
+    // 404 si le bâtiment est hors de la résidence du gestionnaire.
+    where:
+      scope.kind === "residence"
+        ? { id, residenceId: scope.residenceId }
+        : { id },
+  });
   if (!building) notFound();
 
   return (

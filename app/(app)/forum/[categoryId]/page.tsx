@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Badge, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import { formatDateTime } from "@/lib/labels";
 
@@ -11,12 +12,14 @@ export default async function CategoryPage({
 }: {
   params: Promise<{ categoryId: string }>;
 }) {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { categoryId } = await params;
 
-  const category = await prisma.forumCategory.findUnique({
-    where: { id: categoryId },
+  const category = await prisma.forumCategory.findFirst({
+    // 404 si la catégorie est hors de la résidence de l'utilisateur.
+    where: { AND: [optionalBuildingScopeWhere(scope), { id: categoryId }] },
     include: { building: true },
   });
   if (!category) notFound();

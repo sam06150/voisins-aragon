@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { scopeFor, userScopeWhere } from "@/lib/tenancy";
 import { messageSchema } from "@/lib/validation";
 import { notifyUser } from "@/lib/notifications";
 
@@ -29,7 +30,7 @@ export async function sendMessage(
   }
 
   const recipient = await prisma.user.findFirst({
-    where: { id: recipientId, status: "APPROVED" },
+    where: { ...userScopeWhere(scopeFor(user)), id: recipientId, status: "APPROVED" },
   });
   if (!recipient) {
     return { error: "Destinataire introuvable." };
@@ -61,7 +62,7 @@ export async function replyMessage(formData: FormData) {
   if (recipientId === user.id) redirect("/messages");
 
   const recipient = await prisma.user.findFirst({
-    where: { id: recipientId, status: "APPROVED" },
+    where: { ...userScopeWhere(scopeFor(user)), id: recipientId, status: "APPROVED" },
   });
   if (!recipient) redirect("/messages");
 

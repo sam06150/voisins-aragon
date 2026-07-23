@@ -2,6 +2,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isManager } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere, buildingsFor } from "@/lib/tenancy";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate, landlordStepColors, landlordStepLabels } from "@/lib/labels";
@@ -10,21 +11,20 @@ import { deleteStep } from "./actions";
 
 export default async function DemarchesPage() {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const isAdmin = isManager(user.role);
 
   const [steps, buildings] = await Promise.all([
     prisma.landlordStep.findMany({
+      where: optionalBuildingScopeWhere(scope), // cloisonnement par résidence
       include: {
         building: true,
         author: { select: { id: true, firstName: true, lastName: true } },
       },
       orderBy: { occurredAt: "desc" },
     }),
-    prisma.building.findMany({
-      orderBy: { code: "asc" },
-      select: { id: true, name: true },
-    }),
+    buildingsFor(scope),
   ]);
 
   return (

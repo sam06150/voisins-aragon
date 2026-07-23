@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Vidéo 1 — POV (Voisins Unis)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --crimson:#e11d48; --crimson-dark:#9f1239;
+    --amber:#fbbf24; --ink:#0c0c0d;
+    --dur-total:31.2s;
+  }
+  html,body{height:100%}
+  body{
+    background:#141416; overflow:hidden;
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  body.real{overflow:auto}
+
+  .wrap{
+    position:absolute; top:0; left:50%;
+    width:1080px; height:1920px;
+    transform:translateX(-50%) scale(var(--s,.4));
+    transform-origin:top center;
+  }
+  .stage{
+    position:absolute; inset:0; overflow:hidden;
+    background:radial-gradient(120% 80% at 50% 20%, #26262b 0%, var(--ink) 60%, #000 100%);
+  }
+  /* Grain + vignette : casse l'aspect "slide PowerPoint". */
+  .stage::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(70% 55% at 50% 45%, transparent 0%, rgba(0,0,0,.65) 100%);
+  }
+
+  /* Zone sûre TikTok : 150px en haut, 380px en bas (UI de l'app). */
+  .safe{position:absolute; left:0; right:0; top:150px; bottom:380px}
+
+  .scene{
+    position:absolute; inset:0; padding:0 90px;
+    display:flex; flex-direction:column; justify-content:center;
+    opacity:0;
+  }
+  .playing .scene{animation:scene var(--d) var(--t) both}
+  @keyframes scene{
+    0%{opacity:0; transform:translateY(38px) scale(.97)}
+    9%{opacity:1; transform:translateY(0) scale(1)}
+    88%{opacity:1; transform:translateY(0) scale(1)}
+    100%{opacity:0; transform:translateY(-22px) scale(1.02)}
+  }
+
+  .t{color:#fff; font-weight:800; line-height:1.1; letter-spacing:-.01em}
+  .s1{font-size:78px}
+  .s2{font-size:104px}
+  .s3{font-size:132px}
+  .amber{color:var(--amber)}
+  .crimson{color:#ff6b8a}
+  .muted{color:#9a9aa2; font-weight:600}
+  .kicker{
+    font-size:34px; font-weight:800; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:28px;
+  }
+  .quote{
+    border-left:10px solid var(--crimson); padding-left:38px;
+    font-style:italic; color:#e6e6ea;
+  }
+  .dots{font-size:150px; color:#6a6a72; letter-spacing:.12em}
+
+  /* Scène "dossier" : fond crimson plein écran */
+  .flash{
+    position:absolute; inset:0; background:linear-gradient(140deg,var(--crimson),var(--crimson-dark));
+    opacity:0;
+  }
+  .playing .flash{animation:flash 4.2s 22s both}
+  @keyframes flash{
+    0%{opacity:0} 6%{opacity:1} 94%{opacity:1} 100%{opacity:0}
+  }
+
+  /* Outro */
+  .outro{align-items:center; text-align:center}
+  .logo{
+    width:190px; height:190px; border-radius:44px; background:#fff;
+    display:flex; align-items:center; justify-content:center; margin-bottom:44px;
+    box-shadow:0 24px 70px rgba(225,29,72,.4);
+  }
+  .logo svg{width:130px; height:130px}
+  .brand{font-size:96px; font-weight:900; color:#fff; line-height:1}
+  .slogan{font-size:52px; font-weight:800; color:var(--amber); margin-top:26px}
+  .url{
+    margin-top:52px; background:var(--crimson); color:#fff; font-weight:800;
+    font-size:46px; padding:26px 46px; border-radius:20px;
+  }
+  .sub{margin-top:30px; font-size:36px; color:#b9b9c2; font-weight:600}
+
+  /* Contrôles — HORS cadre, jamais enregistrés */
+  .ctl{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    display:flex; gap:10px; align-items:center; justify-content:center;
+    padding:12px; background:rgba(10,10,12,.92); border-top:1px solid #2a2a30;
+    font-size:13px; color:#c9c9d2;
+  }
+  .ctl button{
+    background:var(--crimson); color:#fff; border:0; border-radius:8px;
+    padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .ctl button.alt{background:#2f2f38}
+  .ctl span{opacity:.7}
+  body.rec .ctl{opacity:.06}
+  body.rec .ctl:hover{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="wrap">
+  <div class="stage" id="stage">
+    <div class="flash"></div>
+    <div class="safe">
+
+      <div class="scene" style="--t:0s;--d:3.4s">
+        <div class="kicker">POV</div>
+        <p class="t s2">T&rsquo;as signalé la fuite<br><span class="amber">en janvier.</span></p>
+      </div>
+
+      <div class="scene" style="--t:3.4s;--d:2.8s">
+        <p class="t s3">On est<br>en juillet.</p>
+      </div>
+
+      <div class="scene" style="--t:6.2s;--d:3.6s">
+        <p class="t s1 quote">«&nbsp;Nous n&rsquo;avons rien reçu<br>de votre part.&nbsp;»</p>
+        <p class="t muted" style="font-size:44px;margin-top:38px">— le bailleur</p>
+      </div>
+
+      <div class="scene" style="--t:9.8s;--d:2s">
+        <p class="dots">. . .</p>
+      </div>
+
+      <div class="scene" style="--t:11.8s;--d:3.6s">
+        <p class="t s2">Sauf que<br>t&rsquo;as la photo.</p>
+      </div>
+
+      <div class="scene" style="--t:15.4s;--d:3s">
+        <p class="t s3 amber">Datée.<br>Horodatée.</p>
+      </div>
+
+      <div class="scene" style="--t:18.4s;--d:3.6s">
+        <p class="t s2">Et tes <span class="amber">12 voisins</span><br>aussi.</p>
+      </div>
+
+      <div class="scene" style="--t:22s;--d:4.2s">
+        <p class="t s3">Ça s&rsquo;appelle<br>un dossier.</p>
+      </div>
+
+      <div class="scene outro" style="--t:26.2s;--d:5s">
+        <div class="logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <g fill="#e11d48">
+              <rect x="120" y="176" width="120" height="216" rx="10"/>
+              <rect x="272" y="136" width="120" height="256" rx="10"/>
+            </g>
+            <g fill="#ffffff">
+              <rect x="146" y="206" width="28" height="28" rx="4"/><rect x="186" y="206" width="28" height="28" rx="4"/>
+              <rect x="146" y="256" width="28" height="28" rx="4"/><rect x="186" y="256" width="28" height="28" rx="4"/>
+              <rect x="146" y="306" width="28" height="28" rx="4"/><rect x="186" y="306" width="28" height="28" rx="4"/>
+              <rect x="298" y="166" width="28" height="28" rx="4"/><rect x="338" y="166" width="28" height="28" rx="4"/>
+              <rect x="298" y="216" width="28" height="28" rx="4"/><rect x="338" y="216" width="28" height="28" rx="4"/>
+              <rect x="298" y="266" width="28" height="28" rx="4"/><rect x="338" y="266" width="28" height="28" rx="4"/>
+              <rect x="298" y="316" width="28" height="28" rx="4"/><rect x="338" y="316" width="28" height="28" rx="4"/>
+            </g>
+            <g fill="#fbbf24">
+              <path d="M196 96 L300 128 L300 72 Z"/><circle cx="196" cy="112" r="14"/>
+            </g>
+          </svg>
+        </div>
+        <div class="brand">VOISINS UNIS</div>
+        <div class="slogan">Ensemble,<br>on pèse plus lourd.</div>
+        <div class="url">Lien en bio</div>
+        <div class="sub">Locataires · Gratuit · Privé</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="ctl">
+  <button id="play">▶ Lancer (3 s)</button>
+  <button class="alt" id="size">Taille réelle 1080×1920</button>
+  <button class="alt" id="hide">Masquer les contrôles</button>
+  <span id="clock">0.0 s / 31.2 s</span>
+</div>
+
+<script>
+(function () {
+  const stage = document.getElementById("stage");
+  const wrap = document.getElementById("wrap");
+  const clock = document.getElementById("clock");
+  const TOTAL = 31.2;
+  let real = false, timer = null;
+
+  function fit() {
+    if (real) { document.body.style.setProperty("--s", 1); return; }
+    const s = Math.min((innerHeight - 70) / 1920, (innerWidth - 30) / 1080);
+    document.body.style.setProperty("--s", s);
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  function play() {
+    stage.classList.remove("playing");
+    void stage.offsetWidth; // force le redémarrage des animations
+    clearInterval(timer);
+    // Compte à rebours : laisse le temps de démarrer l'enregistrement.
+    let n = 3;
+    clock.textContent = "Départ dans " + n + "…";
+    const cd = setInterval(() => {
+      n--;
+      if (n > 0) { clock.textContent = "Départ dans " + n + "…"; return; }
+      clearInterval(cd);
+      stage.classList.add("playing");
+      const t0 = performance.now();
+      timer = setInterval(() => {
+        const t = (performance.now() - t0) / 1000;
+        clock.textContent = t.toFixed(1) + " s / " + TOTAL + " s";
+        if (t >= TOTAL) { clearInterval(timer); clock.textContent = "Terminé — " + TOTAL + " s"; }
+      }, 100);
+    }, 1000);
+  }
+
+  document.getElementById("play").onclick = play;
+  document.getElementById("size").onclick = () => {
+    real = !real;
+    document.body.classList.toggle("real", real);
+    fit();
+  };
+  document.getElementById("hide").onclick = () =>
+    document.body.classList.toggle("rec");
+})();
+</script>
+</body>
+</html>

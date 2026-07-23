@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isStaff } from "@/lib/roles";
+import {
+  scopeFor,
+  optionalBuildingScopeWhere,
+  assertBuildingInScope,
+} from "@/lib/tenancy";
 import { pollSchema } from "@/lib/validation";
 import { notifyResidents } from "@/lib/notifications";
 
@@ -31,6 +36,12 @@ export async function createPoll(
   }
   const data = parsed.data;
 
+  try {
+    await assertBuildingInScope(scopeFor(user), data.buildingId || null);
+  } catch {
+    return { error: "Bâtiment hors de votre résidence." };
+  }
+
   const poll = await prisma.poll.create({
     data: {
       question: data.question,
@@ -45,6 +56,7 @@ export async function createPoll(
     message: `Nouveau sondage : « ${data.question} »`,
     link: `/sondages/${poll.id}`,
     buildingId: data.buildingId ? data.buildingId : null,
+    residenceId: user.residenceId, // cloisonnement
     excludeUserId: user.id,
   });
 
@@ -58,7 +70,9 @@ export async function votePoll(formData: FormData) {
   const optionId = formData.get("optionId")?.toString() ?? "";
   if (!pollId || !optionId) redirect("/sondages");
 
-  const poll = await prisma.poll.findUnique({ where: { id: pollId } });
+  const poll = await prisma.poll.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: pollId }] },
+  });
   if (!poll || poll.closed) redirect(`/sondages/${pollId}`);
 
   const option = await prisma.pollOption.findFirst({
@@ -79,7 +93,9 @@ export async function votePoll(formData: FormData) {
 export async function closePoll(formData: FormData) {
   const user = await requireApproved();
   const pollId = formData.get("pollId")?.toString() ?? "";
-  const poll = await prisma.poll.findUnique({ where: { id: pollId } });
+  const poll = await prisma.poll.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: pollId }] },
+  });
   if (!poll) redirect("/sondages");
   if (poll.authorId !== user.id && !isStaff(user.role)) {
     redirect(`/sondages/${pollId}`);
@@ -100,7 +116,9 @@ export async function deletePoll(formData: FormData) {
   const pollId = formData.get("pollId")?.toString() ?? "";
   if (!pollId) redirect("/sondages");
 
-  const poll = await prisma.poll.findUnique({ where: { id: pollId } });
+  const poll = await prisma.poll.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: pollId }] },
+  });
   if (!poll) redirect("/sondages");
 
   if (poll.authorId !== user.id && !isStaff(user.role)) {

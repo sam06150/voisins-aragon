@@ -2,13 +2,16 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 export default async function ForumPage() {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
 
   const categories = await prisma.forumCategory.findMany({
+    where: optionalBuildingScopeWhere(scope), // cloisonnement par résidence
     include: {
       building: true,
       _count: { select: { threads: true } },

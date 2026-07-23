@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, buildingScopeWhere, buildingsFor } from "@/lib/tenancy";
 import type { IncidentStatus } from "@prisma/client";
 import { Badge, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import {
@@ -24,11 +25,12 @@ export default async function IncidentsPage({
 }: {
   searchParams: Promise<{ statut?: string; batiment?: string }>;
 }) {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { statut, batiment } = await searchParams;
 
-  const buildings = await prisma.building.findMany({ orderBy: { code: "asc" } });
+  const buildings = await buildingsFor(scope);
 
   const statusFilter =
     statut && statut !== "tous" ? (statut as IncidentStatus) : null;
@@ -36,6 +38,7 @@ export default async function IncidentsPage({
 
   const incidents = await prisma.incidentReport.findMany({
     where: {
+      ...buildingScopeWhere(scope), // cloisonnement par résidence
       ...(statusFilter ? { status: statusFilter } : {}),
       ...(buildingFilter ? { buildingId: buildingFilter } : {}),
     },

@@ -3,6 +3,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import type { DocumentCategory } from "@prisma/client";
 import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
@@ -17,6 +18,7 @@ export default async function DocumentsPage({
   searchParams: Promise<{ categorie?: string; error?: string }>;
 }) {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const isAdmin = isStaff(user.role);
   const { categorie, error } = await searchParams;
@@ -27,7 +29,12 @@ export default async function DocumentsPage({
       : null;
 
   const documents = await prisma.document.findMany({
-    where: categoryFilter ? { category: categoryFilter } : {},
+    where: {
+      AND: [
+        optionalBuildingScopeWhere(scope), // cloisonnement par résidence
+        categoryFilter ? { category: categoryFilter } : {},
+      ],
+    },
     include: {
       building: true,
       author: { select: { id: true, firstName: true, lastName: true } },

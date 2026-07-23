@@ -4,6 +4,7 @@ import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Alert, Badge, Button, Card, Textarea } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDateTime } from "@/lib/labels";
@@ -22,13 +23,15 @@ export default async function ThreadPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { categoryId, threadId } = await params;
   const { error } = await searchParams;
   const isAdmin = isStaff(user.role);
 
-  const thread = await prisma.forumThread.findUnique({
-    where: { id: threadId },
+  const thread = await prisma.forumThread.findFirst({
+    // 404 si le fil est hors de la résidence de l'utilisateur.
+    where: { AND: [{ category: optionalBuildingScopeWhere(scope) }, { id: threadId }] },
     include: {
       author: { select: { id: true, firstName: true, lastName: true } },
       category: { include: { building: true } },

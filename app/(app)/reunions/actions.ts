@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireManager, requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  scopeFor,
+  optionalBuildingScopeWhere,
+  assertBuildingInScope,
+} from "@/lib/tenancy";
 import { meetingMinutesSchema, meetingSchema, rsvpSchema } from "@/lib/validation";
 import { notifyResidents } from "@/lib/notifications";
 
@@ -32,6 +37,12 @@ export async function createMeeting(
     return { error: "Date invalide." };
   }
 
+  try {
+    await assertBuildingInScope(scopeFor(admin), data.buildingId || null);
+  } catch {
+    return { error: "Bâtiment hors de votre résidence." };
+  }
+
   const meeting = await prisma.meeting.create({
     data: {
       title: data.title,
@@ -48,6 +59,7 @@ export async function createMeeting(
     message: `Nouvelle réunion : « ${data.title} »`,
     link: `/reunions/${meeting.id}`,
     buildingId: data.buildingId ? data.buildingId : null,
+    residenceId: admin.residenceId, // cloisonnement
     excludeUserId: admin.id,
     email: true,
   });
@@ -58,7 +70,7 @@ export async function createMeeting(
 }
 
 export async function updateMinutes(formData: FormData) {
-  await requireManager();
+  const admin = await requireManager();
   const meetingId = formData.get("meetingId")?.toString() ?? "";
 
   const parsed = meetingMinutesSchema.safeParse({
@@ -67,6 +79,12 @@ export async function updateMinutes(formData: FormData) {
   if (!meetingId || !parsed.success) {
     redirect(`/reunions/${meetingId}?error=1`);
   }
+
+  const inScope = await prisma.meeting.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(admin)), { id: meetingId }] },
+    select: { id: true },
+  });
+  if (!inScope) redirect("/reunions");
 
   await prisma.meeting.update({
     where: { id: meetingId },
@@ -88,8 +106,10 @@ export async function setRsvp(formData: FormData) {
 
   // La réunion doit exister (sinon l'upsert lève une erreur de clé étrangère
   // P2003 → 500) : cas d'un meetingId forgé ou d'une réunion supprimée entre-temps.
-  const meeting = await prisma.meeting.findUnique({
-    where: { id: parsed.data.meetingId },
+  const meeting = await prisma.meeting.findFirst({
+    where: {
+      AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: parsed.data.meetingId }],
+    },
   });
   if (!meeting) redirect("/reunions");
 
@@ -113,9 +133,14 @@ export async function setRsvp(formData: FormData) {
 }
 
 export async function deleteMeeting(formData: FormData) {
-  await requireManager();
+  const admin = await requireManager();
   const id = formData.get("meetingId")?.toString() ?? "";
   if (id) {
+    const inScope = await prisma.meeting.findFirst({
+      where: { AND: [optionalBuildingScopeWhere(scopeFor(admin)), { id }] },
+      select: { id: true },
+    });
+    if (!inScope) redirect("/reunions");
     // Détacher les documents liés avant suppression.
     await prisma.document.updateMany({
       where: { meetingId: id },

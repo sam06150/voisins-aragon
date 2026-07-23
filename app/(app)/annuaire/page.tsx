@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireApproved } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
+import { scopeFor, userScopeWhere, buildingsFor } from "@/lib/tenancy";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 export default async function AnnuairePage({
@@ -9,18 +10,18 @@ export default async function AnnuairePage({
 }: {
   searchParams: Promise<{ batiment?: string }>;
 }) {
-  await requireApproved();
+  const user = await requireApproved();
+  const scope = scopeFor(user);
   const { t } = await getI18n();
   const { batiment } = await searchParams;
 
-  const buildings = await prisma.building.findMany({
-    orderBy: { code: "asc" },
-  });
+  const buildings = await buildingsFor(scope);
 
   const selected = batiment && batiment !== "tous" ? batiment : null;
 
   const residents = await prisma.user.findMany({
     where: {
+      ...userScopeWhere(scope), // cloisonnement par résidence
       status: "APPROVED",
       shareInDirectory: true,
       ...(selected ? { unit: { buildingId: selected } } : {}),

@@ -38,6 +38,10 @@ yarn-error.log*
 /prisma/dev.db
 /prisma/dev.db-journal
 
+# sauvegardes de données (contiennent des données personnelles de locataires :
+# ne jamais versionner — conserver hors dépôt, dans un stockage sûr)
+sauvegarde-*.json
+
 # fichiers téléversés (photos d'incidents, documents partagés)
 /uploads/*
 !/uploads/.gitkeep

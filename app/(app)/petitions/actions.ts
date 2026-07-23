@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { requireApproved } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isStaff } from "@/lib/roles";
+import {
+  scopeFor,
+  optionalBuildingScopeWhere,
+  assertBuildingInScope,
+} from "@/lib/tenancy";
 import { petitionSchema } from "@/lib/validation";
 import { notifyResidents } from "@/lib/notifications";
 
@@ -28,6 +33,13 @@ export async function createPetition(
   const data = parsed.data;
   const goal = data.goal ? Number.parseInt(data.goal, 10) : null;
 
+  // Empêche de publier dans la résidence d'un autre en forgeant le buildingId.
+  try {
+    await assertBuildingInScope(scopeFor(user), data.buildingId || null);
+  } catch {
+    return { error: "Bâtiment hors de votre résidence." };
+  }
+
   const petition = await prisma.petition.create({
     data: {
       title: data.title,
@@ -45,6 +57,7 @@ export async function createPetition(
     message: `Nouvelle pétition : « ${data.title} »`,
     link: `/petitions/${petition.id}`,
     buildingId: data.buildingId ? data.buildingId : null,
+    residenceId: user.residenceId, // cloisonnement
     excludeUserId: user.id,
   });
 
@@ -61,8 +74,8 @@ export async function signPetition(formData: FormData) {
   const comment = rawComment ? rawComment.slice(0, 2000) : null;
   if (!petitionId) redirect("/petitions");
 
-  const petition = await prisma.petition.findUnique({
-    where: { id: petitionId },
+  const petition = await prisma.petition.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: petitionId }] },
   });
   if (!petition || petition.closed) {
     redirect(`/petitions/${petitionId}`);
@@ -94,8 +107,8 @@ export async function unsignPetition(formData: FormData) {
 export async function closePetition(formData: FormData) {
   const user = await requireApproved();
   const petitionId = formData.get("petitionId")?.toString() ?? "";
-  const petition = await prisma.petition.findUnique({
-    where: { id: petitionId },
+  const petition = await prisma.petition.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: petitionId }] },
   });
   if (!petition) redirect("/petitions");
 
@@ -119,8 +132,8 @@ export async function deletePetition(formData: FormData) {
   const petitionId = formData.get("petitionId")?.toString() ?? "";
   if (!petitionId) redirect("/petitions");
 
-  const petition = await prisma.petition.findUnique({
-    where: { id: petitionId },
+  const petition = await prisma.petition.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: petitionId }] },
   });
   if (!petition) redirect("/petitions");
 
