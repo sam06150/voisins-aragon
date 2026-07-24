@@ -9,6 +9,7 @@ import {
   userScopeWhere,
 } from "@/lib/tenancy";
 import { Badge, Card } from "@/components/ui";
+import { isManager } from "@/lib/roles";
 import { formatDateTime, incidentStatusLabels } from "@/lib/labels";
 
 export default async function AdminDashboardPage() {
@@ -81,6 +82,17 @@ export default async function AdminDashboardPage() {
         <Stat label={t("Pétitions")} value={petitionCount} />
         <Stat label={t("Sondages")} value={pollCount} />
       </div>
+
+      {isManager(admin.role) ? (
+        <div className="mb-6">
+          <Link
+            href="/admin/journal"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-rose-200 hover:text-rose-700"
+          >
+            📜 {t("Journal d'audit")}
+          </Link>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section>

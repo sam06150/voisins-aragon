@@ -583,6 +583,26 @@ model HelpOffer {
   @@index([resolved, createdAt])
 }
 
+/**
+ * Journal d'audit des actions sensibles (validation/refus de compte, suspension,
+ * changement de rôle, suppression…). Traçabilité interne du collectif : qui a
+ * fait quoi, quand. `actorName` est un instantané (résiste à la suppression du
+ * compte de l'acteur). Pas de clé étrangère volontairement, pour conserver
+ * l'historique même si les comptes cités disparaissent.
+ */
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  actorName   String
+  action      String // ex. "account.approve", "account.role", "account.delete"
+  target      String? // nom/identifiant lisible de la cible
+  detail      String?
+  residenceId String? // cloisonnement (résidence de l'acteur)
+  createdAt   DateTime @default(now())
+
+  @@index([residenceId, createdAt])
+}
+
 model LandlordStep {
   id          String           @id @default(cuid())
   title       String

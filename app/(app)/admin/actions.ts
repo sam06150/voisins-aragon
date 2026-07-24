@@ -22,6 +22,7 @@ import { sendEmail, emailLayout, escapeHtml } from "@/lib/email";
 import { DELETED_EMAIL_PREFIX } from "@/lib/accounts";
 import { geocodeAddress } from "@/lib/geocode";
 import { setSetting } from "@/lib/settings";
+import { logAudit } from "@/lib/audit";
 
 /**
  * Charge le compte cible et vérifie que l'acteur peut agir dessus (rôle
@@ -51,7 +52,7 @@ export async function deleteUser(formData: FormData) {
     redirect("/admin/comptes?delerror=self");
   }
 
-  await assertCanActOn(actor, userId, "/admin/comptes?delerror=rank");
+  const target = await assertCanActOn(actor, userId, "/admin/comptes?delerror=rank");
 
   const randomHash = await hashPassword(randomUUID());
   await prisma.user.update({
@@ -73,6 +74,11 @@ export async function deleteUser(formData: FormData) {
     },
   });
 
+  await logAudit(actor, "account.delete", {
+    target: `${target.firstName} ${target.lastName}`,
+    detail: "Compte anonymisé et accès coupé.",
+  });
+
   revalidatePath("/admin/comptes");
   revalidatePath("/annuaire");
   redirect("/admin/comptes?delok=1");
@@ -90,11 +96,15 @@ export async function suspendUser(formData: FormData) {
     redirect("/admin/comptes?suerror=self");
   }
 
-  await assertCanActOn(actor, userId, "/admin/comptes?suerror=rank");
+  const target = await assertCanActOn(actor, userId, "/admin/comptes?suerror=rank");
 
   await prisma.user.update({
     where: { id: userId },
     data: { status: "SUSPENDED", lastSeenAt: null },
+  });
+
+  await logAudit(actor, "account.suspend", {
+    target: `${target.firstName} ${target.lastName}`,
   });
 
   revalidatePath("/admin/comptes");
@@ -108,11 +118,15 @@ export async function reactivateUser(formData: FormData) {
   const userId = formData.get("userId")?.toString() ?? "";
   if (!userId) redirect("/admin/comptes");
 
-  await assertCanActOn(actor, userId, "/admin/comptes?suerror=rank");
+  const target = await assertCanActOn(actor, userId, "/admin/comptes?suerror=rank");
 
   await prisma.user.update({
     where: { id: userId },
     data: { status: "APPROVED" },
+  });
+
+  await logAudit(actor, "account.reactivate", {
+    target: `${target.firstName} ${target.lastName}`,
   });
 
   revalidatePath("/admin/comptes");
@@ -162,7 +176,7 @@ async function findOrCreateUnit(
 }
 
 export async function approveAccount(formData: FormData) {
-  await requireManager();
+  const actor = await requireManager();
 
   const userId = formData.get("userId")?.toString() ?? "";
   const action = formData.get("action")?.toString() ?? "";
@@ -175,6 +189,9 @@ export async function approveAccount(formData: FormData) {
     await prisma.user.update({
       where: { id: userId },
       data: { status: "REJECTED" },
+    });
+    await logAudit(actor, "account.reject", {
+      target: `${user.firstName} ${user.lastName}`,
     });
     revalidatePath("/admin/comptes");
     redirect("/admin/comptes");
@@ -260,6 +277,10 @@ export async function approveAccount(formData: FormData) {
       "Bienvenue dans le collectif !",
       `<p>Bonjour ${escapeHtml(user.firstName)},</p><p>Votre compte sur la plateforme des Voisins Collectif et en Colère a été validé par un référent. Vous pouvez désormais vous connecter et participer.</p>`,
     ),
+  });
+
+  await logAudit(actor, "account.approve", {
+    target: `${user.firstName} ${user.lastName}`,
   });
 
   revalidatePath("/admin/comptes");
@@ -370,9 +391,13 @@ export async function resetUserPassword(formData: FormData) {
   await assertCanActOn(admin, parsed.data.userId, "/admin/comptes?pwerror=rank");
 
   const passwordHash = await hashPassword(parsed.data.newPassword);
-  await prisma.user.update({
+  const pwTarget = await prisma.user.update({
     where: { id: parsed.data.userId },
     data: { passwordHash },
+  });
+
+  await logAudit(admin, "account.password_reset", {
+    target: `${pwTarget.firstName} ${pwTarget.lastName}`,
   });
 
   revalidatePath("/admin/comptes");
@@ -393,9 +418,14 @@ export async function setUserRole(formData: FormData) {
     redirect("/admin/comptes?roleerror=self");
   }
 
-  await prisma.user.update({
+  const roleTarget = await prisma.user.update({
     where: { id: parsed.data.userId },
     data: { role: parsed.data.role },
+  });
+
+  await logAudit(admin, "account.role", {
+    target: `${roleTarget.firstName} ${roleTarget.lastName}`,
+    detail: `Nouveau rôle : ${parsed.data.role}`,
   });
 
   revalidatePath("/admin/comptes");
