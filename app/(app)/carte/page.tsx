@@ -13,7 +13,7 @@ export default async function CartePage() {
   const scope = scopeFor(user);
   const { t } = await getI18n();
 
-  const [buildings, residenceName] = await Promise.all([
+  const [buildings, openByBuilding, residenceName] = await Promise.all([
     prisma.building.findMany({
       // cloisonnement par résidence
       where:
@@ -21,8 +21,22 @@ export default async function CartePage() {
       orderBy: { code: "asc" },
       include: { residence: true },
     }),
+    // Signalements actifs par bâtiment (pour la carte de chaleur).
+    prisma.incidentReport.groupBy({
+      by: ["buildingId"],
+      where: {
+        status: { in: ["OUVERT", "EN_COURS"] },
+        ...(scope.kind === "residence"
+          ? { building: { residenceId: scope.residenceId } }
+          : {}),
+      },
+      _count: { _all: true },
+    }),
     getResidenceName(),
   ]);
+
+  const openCountFor = (buildingId: string) =>
+    openByBuilding.find((x) => x.buildingId === buildingId)?._count._all ?? 0;
 
   const located = buildings.filter(
     (b): b is typeof b & { latitude: number; longitude: number } =>
@@ -69,6 +83,7 @@ export default async function CartePage() {
             latitude: b.latitude,
             longitude: b.longitude,
             residence: b.residence?.name ?? null,
+            openIncidents: openCountFor(b.id),
           }))}
         />
       )}
@@ -81,14 +96,22 @@ export default async function CartePage() {
                 🏢 {resName}
               </h2>
               <ul className="space-y-1 text-sm">
-                {list.map((b) => (
-                  <li key={b.id} className="text-gray-700">
-                    <span className="font-semibold">{b.name}</span>
-                    {b.address ? (
-                      <span className="text-gray-500"> · {b.address}</span>
-                    ) : null}
-                  </li>
-                ))}
+                {list.map((b) => {
+                  const n = openCountFor(b.id);
+                  return (
+                    <li key={b.id} className="flex items-center gap-2 text-gray-700">
+                      <span className="font-semibold">{b.name}</span>
+                      {b.address ? (
+                        <span className="text-gray-500"> · {b.address}</span>
+                      ) : null}
+                      {n > 0 ? (
+                        <span className="ml-auto rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                          {n} {t("actif(s)")}
+                        </span>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           ))}
