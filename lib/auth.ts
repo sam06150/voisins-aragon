@@ -12,7 +12,9 @@ export async function getSession() {
 }
 
 export async function hashPassword(plain: string): Promise<string> {
-  return bcrypt.hash(plain, 10);
+  // cost 12 : compromis sécurité/latence recommandé (les hachages existants
+  // en cost 10 restent vérifiables sans migration).
+  return bcrypt.hash(plain, 12);
 }
 
 export async function verifyPassword(

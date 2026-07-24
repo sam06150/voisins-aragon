@@ -18,15 +18,19 @@ export async function POST(request: Request) {
   }
   const { email, password } = parsed.data;
 
-  // Clé de limitation : IP + e-mail visé.
+  // Clés de limitation : IP + e-mail visé (brute-force ciblé) ET IP seule
+  // (password-spraying : 1 mot de passe testé sur beaucoup de comptes).
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   const rlKey = `${ip}:${email}`;
+  const ipKey = `ip:${ip}`;
 
-  // On compte la tentative AVANT de vérifier le mot de passe (ferme la course).
-  const rl = registerAttempt(rlKey);
-  if (!rl.allowed) {
-    const minutes = Math.ceil((rl.retryAfterSec ?? 0) / 60);
+  // On compte les tentatives AVANT de vérifier le mot de passe (ferme la course).
+  const rlIp = registerAttempt(ipKey, 50); // 50 échecs/15 min par IP
+  const rl = registerAttempt(rlKey); // 5 échecs/15 min par IP+email
+  if (!rl.allowed || !rlIp.allowed) {
+    const retry = Math.max(rl.retryAfterSec ?? 0, rlIp.retryAfterSec ?? 0);
+    const minutes = Math.ceil(retry / 60);
     return NextResponse.json(
       {
         error: `Trop de tentatives. Réessayez dans environ ${minutes} minute(s).`,

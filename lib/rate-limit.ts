@@ -19,7 +19,10 @@ const BLOCK_MS = 15 * 60 * 1000; // 15 min de blocage
  * remis à zéro au redémarrage). Pour une protection robuste en production
  * multi-instances, brancher un store partagé (Redis/Upstash) avec INCR atomique.
  */
-export function registerAttempt(key: string): {
+export function registerAttempt(
+  key: string,
+  max: number = MAX_ATTEMPTS,
+): {
   allowed: boolean;
   retryAfterSec?: number;
 } {
@@ -39,7 +42,7 @@ export function registerAttempt(key: string): {
   }
 
   entry.count += 1;
-  if (entry.count > MAX_ATTEMPTS) {
+  if (entry.count > max) {
     entry.blockedUntil = now + BLOCK_MS;
     return { allowed: false, retryAfterSec: Math.ceil(BLOCK_MS / 1000) };
   }
