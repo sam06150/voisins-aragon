@@ -6,12 +6,19 @@ services:
     runtime: node
     plan: free
     # --include=dev : Prisma CLI et tsx sont des devDependencies nécessaires au build.
-    # `prisma db push` crée le schéma directement dans Postgres (Neon), sans
-    # fichiers de migration ; le seed (idempotent) garantit les comptes admin.
+    # Migrations Prisma (remplace `db push`) : historique versionné + rollback.
+    # `migrate resolve --applied 0_init` : baseline. La base Neon existe déjà
+    #   (créée par les anciens `db push`) ; on marque la migration initiale comme
+    #   DÉJÀ appliquée sans la ré-exécuter (aucune perte de données). Idempotent :
+    #   `|| true` avale l'erreur "déjà appliquée" aux déploiements suivants.
+    # `migrate deploy` applique ensuite uniquement les NOUVELLES migrations.
+    # NB : sur une base VIERGE, retirer la ligne `resolve` (les tables seraient
+    #   sinon marquées appliquées sans être créées).
     buildCommand: >-
       npm install --include=dev &&
       npx prisma generate &&
-      npx prisma db push --accept-data-loss &&
+      (npx prisma migrate resolve --applied 0_init || true) &&
+      npx prisma migrate deploy &&
       npm run db:seed &&
       npm run build
     startCommand: npm start
