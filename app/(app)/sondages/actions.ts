@@ -110,6 +110,37 @@ export async function closePoll(formData: FormData) {
   redirect(`/sondages/${pollId}`);
 }
 
+/**
+ * Épingle / retire un sondage en page d'accueil (sondage express 1 clic).
+ * Réservé à l'auteur ou au staff. Un seul sondage épinglé à la fois dans le
+ * périmètre : épingler un sondage retire l'épingle des autres.
+ */
+export async function toggleFeatured(formData: FormData) {
+  const user = await requireApproved();
+  const pollId = formData.get("pollId")?.toString() ?? "";
+  const poll = await prisma.poll.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: pollId }] },
+  });
+  if (!poll) redirect("/sondages");
+  if (poll.authorId !== user.id && !isStaff(user.role)) {
+    redirect(`/sondages/${pollId}`);
+  }
+
+  const next = !poll.featured;
+  if (next) {
+    // Un seul épinglé : on retire l'épingle de tous les autres du périmètre.
+    await prisma.poll.updateMany({
+      where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { featured: true }] },
+      data: { featured: false },
+    });
+  }
+  await prisma.poll.update({ where: { id: pollId }, data: { featured: next } });
+
+  revalidatePath("/accueil");
+  revalidatePath(`/sondages/${pollId}`);
+  redirect(`/sondages/${pollId}`);
+}
+
 /** Supprime un sondage (auteur ou staff). Options et votes supprimés en cascade. */
 export async function deletePoll(formData: FormData) {
   const user = await requireApproved();

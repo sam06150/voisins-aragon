@@ -8,7 +8,7 @@ import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
 import { Badge, Card } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate } from "@/lib/labels";
-import { closePoll, deletePoll, votePoll } from "../actions";
+import { closePoll, deletePoll, votePoll, toggleFeatured } from "../actions";
 
 export default async function SondageDetailPage({
   params,
@@ -150,6 +150,21 @@ export default async function SondageDetailPage({
           </p>
           {canManage ? (
             <div className="flex items-center gap-2">
+              {!poll.closed ? (
+                <form action={toggleFeatured}>
+                  <input type="hidden" name="pollId" value={poll.id} />
+                  <ConfirmButton
+                    variant="neutral"
+                    confirmMessage={
+                      poll.featured
+                        ? t("Retirer ce sondage de la page d'accueil ?")
+                        : t("Épingler ce sondage en page d'accueil (vote express) ?")
+                    }
+                  >
+                    {poll.featured ? t("📌 Retirer de l'accueil") : t("📌 Épingler en accueil")}
+                  </ConfirmButton>
+                </form>
+              ) : null}
               <form action={closePoll}>
                 <input type="hidden" name="pollId" value={poll.id} />
                 <ConfirmButton

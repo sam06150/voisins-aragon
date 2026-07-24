@@ -492,10 +492,14 @@ model Poll {
   authorId   String
   author     User      @relation(fields: [authorId], references: [id])
   closed     Boolean   @default(false)
+  /** Épinglé en page d'accueil comme "sondage express" (vote en 1 clic). */
+  featured   Boolean   @default(false)
   createdAt  DateTime  @default(now())
 
   options PollOption[]
   votes   PollVote[]
+
+  @@index([featured, closed])
 }
 
 model PollOption {

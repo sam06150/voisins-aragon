@@ -16,6 +16,7 @@ import {
   incidentStatusColors,
   incidentStatusLabels,
 } from "@/lib/labels";
+import { votePoll } from "../sondages/actions";
 
 export default async function AccueilPage() {
   const user = await requireApproved();
@@ -30,7 +31,7 @@ export default async function AccueilPage() {
 
   const onlineSince = new Date(Date.now() - 5 * 60 * 1000);
 
-  const [announcements, incidents, nextMeeting, counts, onlineUsers] =
+  const [announcements, incidents, nextMeeting, counts, onlineUsers, featuredPoll] =
     await Promise.all([
       prisma.announcement.findMany({
         where: { AND: [scopeWhere, { OR: buildingFilter }] },
@@ -84,9 +85,24 @@ export default async function AccueilPage() {
         },
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
       }),
+      // Sondage express épinglé (vote en 1 clic depuis l'accueil).
+      prisma.poll.findFirst({
+        where: {
+          AND: [optionalBuildingScopeWhere(scope), { featured: true, closed: false }],
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+          options: { include: { _count: { select: { votes: true } } } },
+          votes: { where: { userId: user.id }, select: { optionId: true } },
+        },
+      }),
     ]);
 
   const [openIncidents, threadCount, docCount] = counts;
+
+  const myPollVote = featuredPoll?.votes[0]?.optionId ?? null;
+  const pollTotal =
+    featuredPoll?.options.reduce((sum, o) => sum + o._count.votes, 0) ?? 0;
 
   return (
     <div>
@@ -94,6 +110,63 @@ export default async function AccueilPage() {
         title={`${t("Bonjour")} ${user.firstName} 👋`}
         description={t("Le tableau de bord du collectif des locataires.")}
       />
+
+      {featuredPoll ? (
+        <Card className="mb-6 border-rose-200 bg-rose-50/40">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-lg">🗳️</span>
+            <h2 className="text-lg font-bold text-gray-900">
+              {t("Sondage express")}
+            </h2>
+          </div>
+          <p className="mb-3 font-semibold text-gray-900">
+            {featuredPoll.question}
+          </p>
+          <form action={votePoll} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <input type="hidden" name="pollId" value={featuredPoll.id} />
+            {featuredPoll.options.map((o) => {
+              const votes = o._count.votes;
+              const pct = pollTotal > 0 ? Math.round((votes / pollTotal) * 100) : 0;
+              const mine = myPollVote === o.id;
+              const showResults = myPollVote !== null;
+              return (
+                <button
+                  key={o.id}
+                  type="submit"
+                  name="optionId"
+                  value={o.id}
+                  className={`relative overflow-hidden rounded-lg border px-4 py-3 text-left transition ${
+                    mine
+                      ? "border-rose-400 bg-rose-50"
+                      : "border-gray-200 bg-white hover:border-rose-300"
+                  }`}
+                >
+                  {showResults ? (
+                    <span
+                      className="absolute inset-y-0 left-0 bg-rose-100/70"
+                      style={{ width: `${pct}%` }}
+                    />
+                  ) : null}
+                  <span className="relative flex items-center justify-between gap-2">
+                    <span className="font-medium text-gray-900">
+                      {mine ? "✓ " : ""}
+                      {o.label}
+                    </span>
+                    {showResults ? (
+                      <span className="text-sm text-gray-600">{pct}%</span>
+                    ) : null}
+                  </span>
+                </button>
+              );
+            })}
+          </form>
+          <p className="mt-2 text-xs text-gray-500">
+            {myPollVote !== null
+              ? `${pollTotal} ${t("vote(s)")} · ${t("vous pouvez changer votre vote")}`
+              : t("Cliquez pour voter — 1 clic suffit.")}
+          </p>
+        </Card>
+      ) : null}
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label={t("Signalements actifs")} value={openIncidents} href="/incidents" />
