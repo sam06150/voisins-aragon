@@ -205,7 +205,10 @@ export default async function DossierPage({
                   {i.description}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  {t("Signalé par")} {i.author.firstName} {i.author.lastName}
+                  {t("Signalé par")}{" "}
+                  {i.anonymous
+                    ? t("Anonyme")
+                    : `${i.author.firstName} ${i.author.lastName}`}
                 </p>
                 {i.photos.filter((p) => !p.filePath.endsWith(".pdf")).length >
                 0 ? (

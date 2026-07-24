@@ -135,8 +135,11 @@ export default async function IncidentsPage({
                   {i.description}
                 </p>
                 <p className="mt-2 text-xs text-gray-500">
-                  {t("Par")} {i.author.firstName} {i.author.lastName} ·{" "}
-                  {formatDateTime(i.createdAt)}
+                  {t("Par")}{" "}
+                  {i.anonymous
+                    ? `🕶️ ${t("Anonyme")}`
+                    : `${i.author.firstName} ${i.author.lastName}`}{" "}
+                  · {formatDateTime(i.createdAt)}
                 </p>
               </div>
             </Link>

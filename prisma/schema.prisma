@@ -274,6 +274,8 @@ model IncidentReport {
   description String
   category    IncidentCategory
   status      IncidentStatus   @default(OUVERT)
+  /** Signalement anonyme : l'auteur n'est pas affiché (protection anti-représailles). */
+  anonymous   Boolean          @default(false)
 
   buildingId String
   building   Building @relation(fields: [buildingId], references: [id])

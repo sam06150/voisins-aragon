@@ -59,6 +59,8 @@ export async function createIncident(
     }
   }
 
+  const anonymous = formData.get("anonymous")?.toString() === "on";
+
   const incident = await prisma.incidentReport.create({
     data: {
       title: data.title,
@@ -67,6 +69,7 @@ export async function createIncident(
       buildingId: data.buildingId,
       unitId: data.unitId ? data.unitId : null,
       authorId: user.id,
+      anonymous,
     },
   });
 

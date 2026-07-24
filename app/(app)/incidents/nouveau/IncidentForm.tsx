@@ -116,6 +116,25 @@ export default function IncidentForm({
         />
       </Field>
 
+      <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <input
+          type="checkbox"
+          name="anonymous"
+          value="on"
+          className="mt-0.5 h-5 w-5 rounded border-gray-300 text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500"
+        />
+        <span className="text-sm">
+          <span className="font-semibold text-gray-900">
+            {t("Signaler anonymement")}
+          </span>
+          <span className="mt-0.5 block text-gray-600">
+            {t(
+              "Votre nom ne sera affiché à personne (protection contre d'éventuelles représailles du bailleur). Les référents ne verront pas non plus votre nom sur ce signalement.",
+            )}
+          </span>
+        </span>
+      </label>
+
       <Button type="submit" disabled={pending}>
         {pending ? t("Envoi…") : t("Publier le signalement")}
       </Button>
