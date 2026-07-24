@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { scopeFor, buildingScopeWhere } from "@/lib/tenancy";
 import { Alert, Badge, Button, Card, Select } from "@/components/ui";
 import {
+  formatDate,
   formatDateTime,
   incidentCategoryLabels,
   incidentStatusColors,
@@ -15,7 +16,12 @@ import {
 import { incidentStatuses } from "@/lib/validation";
 import { publicFileUrl } from "@/lib/storage";
 import ConfirmButton from "@/components/ConfirmButton";
-import { deleteIncident, toggleSupport, updateIncidentStatus } from "../actions";
+import {
+  deleteIncident,
+  toggleSupport,
+  updateIncidentStatus,
+  setIncidentPromise,
+} from "../actions";
 
 export default async function IncidentDetailPage({
   params,
@@ -49,6 +55,26 @@ export default async function IncidentDetailPage({
   const iSupport = incident.supports.some((s) => s.userId === user.id);
   const images = incident.photos.filter((p) => !p.filePath.endsWith(".pdf"));
   const pdfs = incident.photos.filter((p) => p.filePath.endsWith(".pdf"));
+
+  // Suivi de résolution : promesse du bailleur vs réalité.
+  const promiseBroken =
+    incident.landlordPromiseAt !== null &&
+    incident.resolvedAt === null &&
+    incident.landlordPromiseAt < new Date();
+  const resolutionDays =
+    incident.resolvedAt !== null
+      ? Math.max(
+          0,
+          Math.round(
+            (incident.resolvedAt.getTime() - incident.createdAt.getTime()) /
+              (24 * 60 * 60 * 1000),
+          ),
+        )
+      : null;
+  // Valeur pour l'input date (YYYY-MM-DD).
+  const promiseInput = incident.landlordPromiseAt
+    ? incident.landlordPromiseAt.toISOString().slice(0, 10)
+    : "";
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -88,6 +114,26 @@ export default async function IncidentDetailPage({
         <p className="mt-3 whitespace-pre-wrap text-gray-700">
           {incident.description}
         </p>
+
+        {incident.resolvedAt ? (
+          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+            ✅ {t("Résolu le")} {formatDate(incident.resolvedAt)}
+            {resolutionDays !== null
+              ? ` · ${t("en")} ${resolutionDays} ${t("jour(s)")}`
+              : ""}
+          </div>
+        ) : promiseBroken ? (
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800">
+            ⛔ {t("Promesse non tenue")} —{" "}
+            {t("le bailleur s'était engagé pour le")}{" "}
+            {formatDate(incident.landlordPromiseAt!)}
+          </div>
+        ) : incident.landlordPromiseAt ? (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            🕒 {t("Intervention promise par le bailleur pour le")}{" "}
+            {formatDate(incident.landlordPromiseAt)}
+          </div>
+        ) : null}
 
         {images.length > 0 ? (
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -191,6 +237,28 @@ export default async function IncidentDetailPage({
             <Button type="submit" variant="secondary">
               {t("Enregistrer")}
             </Button>
+          </form>
+
+          <h2 className="mb-2 mt-5 text-sm font-semibold text-gray-800">
+            {t("Date d'intervention promise par le bailleur")}
+          </h2>
+          <form
+            action={setIncidentPromise}
+            className="flex flex-wrap items-end gap-3"
+          >
+            <input type="hidden" name="incidentId" value={incident.id} />
+            <input
+              type="date"
+              name="promiseAt"
+              defaultValue={promiseInput}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+            />
+            <Button type="submit" variant="secondary">
+              {t("Enregistrer")}
+            </Button>
+            <span className="text-xs text-gray-500">
+              {t("Laisser vide pour effacer.")}
+            </span>
           </form>
         </Card>
       ) : null}

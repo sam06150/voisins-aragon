@@ -276,6 +276,10 @@ model IncidentReport {
   status      IncidentStatus   @default(OUVERT)
   /** Signalement anonyme : l'auteur n'est pas affiché (protection anti-représailles). */
   anonymous   Boolean          @default(false)
+  /** Date à laquelle le bailleur a promis d'intervenir (saisie par un référent). */
+  landlordPromiseAt DateTime?
+  /** Date effective de résolution (auto-renseignée au passage en RESOLU/CLOS). */
+  resolvedAt        DateTime?
 
   buildingId String
   building   Building @relation(fields: [buildingId], references: [id])

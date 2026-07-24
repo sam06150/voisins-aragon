@@ -210,6 +210,22 @@ export default async function DossierPage({
                     ? t("Anonyme")
                     : `${i.author.firstName} ${i.author.lastName}`}
                 </p>
+                {i.resolvedAt ? (
+                  <p className="mt-1 text-xs font-medium text-green-700">
+                    ✅ {t("Résolu le")} {formatDate(i.resolvedAt)}
+                  </p>
+                ) : i.landlordPromiseAt && i.landlordPromiseAt < new Date() ? (
+                  <p className="mt-1 text-xs font-semibold text-rose-700">
+                    ⛔ {t("Promesse non tenue")} —{" "}
+                    {t("intervention promise pour le")}{" "}
+                    {formatDate(i.landlordPromiseAt)}
+                  </p>
+                ) : i.landlordPromiseAt ? (
+                  <p className="mt-1 text-xs text-amber-700">
+                    🕒 {t("Intervention promise pour le")}{" "}
+                    {formatDate(i.landlordPromiseAt)}
+                  </p>
+                ) : null}
                 {i.photos.filter((p) => !p.filePath.endsWith(".pdf")).length >
                 0 ? (
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">

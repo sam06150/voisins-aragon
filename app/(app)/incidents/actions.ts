@@ -153,13 +153,49 @@ export async function updateIncidentStatus(formData: FormData) {
   });
   if (!inScope) redirect("/incidents");
 
+  // resolvedAt : renseigné au passage en RESOLU/CLOS, effacé si on rouvre.
+  const resolved =
+    parsed.data.status === "RESOLU" || parsed.data.status === "CLOS";
+  const current = await prisma.incidentReport.findUnique({
+    where: { id: incidentId },
+    select: { resolvedAt: true },
+  });
   await prisma.incidentReport.update({
     where: { id: incidentId },
-    data: { status: parsed.data.status },
+    data: {
+      status: parsed.data.status,
+      resolvedAt: resolved ? (current?.resolvedAt ?? new Date()) : null,
+    },
   });
 
   revalidatePath(`/incidents/${incidentId}`);
   revalidatePath("/incidents");
+  redirect(`/incidents/${incidentId}?ok=1`);
+}
+
+/** Enregistre (ou efface) la date à laquelle le bailleur a promis d'intervenir. */
+export async function setIncidentPromise(formData: FormData) {
+  const staff = await requireStaff();
+  const incidentId = formData.get("incidentId")?.toString() ?? "";
+  const raw = formData.get("promiseAt")?.toString() ?? "";
+
+  const inScope = await prisma.incidentReport.findFirst({
+    where: { AND: [buildingScopeWhere(scopeFor(staff)), { id: incidentId }] },
+    select: { id: true },
+  });
+  if (!inScope) redirect("/incidents");
+
+  const date = raw ? new Date(raw) : null;
+  if (raw && Number.isNaN(date!.getTime())) {
+    redirect(`/incidents/${incidentId}?error=1`);
+  }
+
+  await prisma.incidentReport.update({
+    where: { id: incidentId },
+    data: { landlordPromiseAt: date },
+  });
+
+  revalidatePath(`/incidents/${incidentId}`);
   redirect(`/incidents/${incidentId}?ok=1`);
 }
 
