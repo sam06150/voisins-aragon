@@ -25,7 +25,7 @@ const GROUPS: NavGroup[] = [
       { href: "/petitions", label: "Pétitions" },
       { href: "/sondages", label: "Sondages" },
       { href: "/demarches", label: "Démarches bailleur" },
-      { href: "/courrier", label: "Lettre au bailleur" },
+      { href: "/courrier", label: "Courriers juridiques" },
       { href: "/statistiques", label: "Statistiques" },
     ],
   },

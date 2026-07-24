@@ -1,28 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import { Field, Input, Textarea } from "@/components/ui";
+import { Field, Input, Select, Textarea } from "@/components/ui";
 import PrintButton from "@/components/PrintButton";
 import { useT } from "@/components/I18nProvider";
+import {
+  LETTER_TEMPLATES,
+  getTemplate,
+  type LetterContext,
+} from "@/lib/letterTemplates";
 
 export default function LetterEditor({
   senderName,
   senderMeta,
   destDefault,
-  objetDefault,
-  corpsDefault,
+  ctx,
 }: {
   senderName: string;
   senderMeta: string;
   destDefault: string;
-  objetDefault: string;
-  corpsDefault: string;
+  ctx: LetterContext;
 }) {
   const t = useT();
+
+  const [templateId, setTemplateId] = useState(LETTER_TEMPLATES[0].id);
+  const template = getTemplate(templateId);
+  const initial = template.build(ctx);
+
   const [ville, setVille] = useState("");
   const [dest, setDest] = useState(destDefault);
-  const [objet, setObjet] = useState(objetDefault);
-  const [corps, setCorps] = useState(corpsDefault);
+  const [objet, setObjet] = useState(initial.objet);
+  const [corps, setCorps] = useState(initial.corps);
+  // Permet de régénérer le texte quand on change de modèle sans écraser
+  // silencieusement des retouches : on demande confirmation si l'utilisateur
+  // a déjà modifié le corps.
+  const [touched, setTouched] = useState(false);
+
+  function applyTemplate(id: string) {
+    if (
+      touched &&
+      !window.confirm(
+        t(
+          "Changer de modèle remplacera le texte que vous avez déjà écrit. Continuer ?",
+        ),
+      )
+    ) {
+      return;
+    }
+    const next = getTemplate(id).build(ctx);
+    setTemplateId(id);
+    setObjet(next.objet);
+    setCorps(next.corps);
+    setTouched(false);
+  }
 
   const dateStr = new Date().toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -34,6 +64,33 @@ export default function LetterEditor({
     <div>
       {/* Formulaire (non imprimé) */}
       <div className="space-y-4 print:hidden">
+        <Field
+          label={t("Type de courrier")}
+          htmlFor="template"
+          hint={t(template.hint)}
+        >
+          <Select
+            id="template"
+            value={templateId}
+            onChange={(e) => applyTemplate(e.target.value)}
+          >
+            {LETTER_TEMPLATES.map((m) => (
+              <option key={m.id} value={m.id}>
+                {t(m.label)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <span className="font-semibold">{t("Base légale")} :</span>{" "}
+          {t(template.legal)}
+          <br />
+          {t(
+            "Modèle indicatif — il ne remplace pas l'avis d'un juriste (ADIL, association de locataires).",
+          )}
+        </p>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t("Votre ville")} htmlFor="ville">
             <Input
@@ -47,14 +104,17 @@ export default function LetterEditor({
             <Input
               id="objet"
               value={objet}
-              onChange={(e) => setObjet(e.target.value)}
+              onChange={(e) => {
+                setObjet(e.target.value);
+                setTouched(true);
+              }}
             />
           </Field>
         </div>
         <Field
-          label={t("Destinataire (bailleur / gestionnaire)")}
+          label={t("Destinataire")}
           htmlFor="dest"
-          hint={t("Renseignez le nom et l'adresse de votre bailleur.")}
+          hint={t("Renseignez le nom et l'adresse du destinataire.")}
         >
           <Textarea
             id="dest"
@@ -67,14 +127,19 @@ export default function LetterEditor({
           <Textarea
             id="corps"
             value={corps}
-            onChange={(e) => setCorps(e.target.value)}
+            onChange={(e) => {
+              setCorps(e.target.value);
+              setTouched(true);
+            }}
             className="min-h-64"
           />
         </Field>
         <div className="flex items-center gap-3">
           <PrintButton />
           <p className="text-xs text-gray-500">
-            {t("Relisez et complétez, puis imprimez ou enregistrez en PDF pour l'envoyer (idéalement en recommandé).")}
+            {t(
+              "Relisez et complétez, puis imprimez ou enregistrez en PDF pour l'envoyer (idéalement en recommandé avec accusé de réception).",
+            )}
           </p>
         </div>
       </div>

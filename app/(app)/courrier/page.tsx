@@ -39,9 +39,6 @@ export default async function CourrierPage() {
     "À l'attention du bailleur / gestionnaire de l'immeuble\n" +
     "[Nom du bailleur]\n[Adresse du bailleur]";
 
-  const objetDefault =
-    "Signalement de dysfonctionnements et demande d'intervention";
-
   const problemLines =
     incidents.length > 0
       ? incidents
@@ -50,38 +47,28 @@ export default async function CourrierPage() {
               `- ${i.title} (${t(incidentCategoryLabels[i.category])}, ${i.building.name}, signalé le ${formatDate(i.createdAt)})`,
           )
           .join("\n")
-      : "- [Décrivez ici le ou les problèmes constatés]";
+      : "";
 
-  const corpsDefault = `Madame, Monsieur,
-
-Locataire ${
-    user.unit ? `du logement ${user.unit.label}` : "de la résidence"
-  }, je me permets de vous alerter sur plusieurs dysfonctionnements qui perturbent nos conditions de vie et nécessitent votre intervention :
-
-${problemLines}
-
-Ces problèmes, constatés par plusieurs locataires, relèvent de votre responsabilité de bailleur au titre de l'entretien du logement et des parties communes (article 6 de la loi du 6 juillet 1989).
-
-En conséquence, je vous demande de bien vouloir faire procéder aux réparations et interventions nécessaires dans les meilleurs délais, et au plus tard sous quinze (15) jours à compter de la réception de ce courrier.
-
-À défaut, je me réserve le droit d'engager, avec le collectif des locataires, toute démarche utile pour faire valoir nos droits.
-
-Dans l'attente de votre réponse, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.`;
+  const ctx = {
+    senderName,
+    unitLabel: user.unit ? `logement ${user.unit.label}` : null,
+    problemLines,
+    hasProblems: incidents.length > 0,
+  };
 
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        title={t("Lettre au bailleur")}
+        title={t("Générateur de courriers juridiques")}
         description={t(
-          "Une lettre pré-remplie avec vos informations et les problèmes en cours. Relisez, complétez l'adresse du bailleur, puis imprimez ou enregistrez en PDF.",
+          "Choisissez un type de courrier : il est pré-rempli avec vos informations, les problèmes en cours et la base légale. Relisez, complétez, puis imprimez ou enregistrez en PDF.",
         )}
       />
       <LetterEditor
         senderName={senderName}
         senderMeta={senderMeta}
         destDefault={destDefault}
-        objetDefault={objetDefault}
-        corpsDefault={corpsDefault}
+        ctx={ctx}
       />
     </div>
   );
