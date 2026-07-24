@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
+// text-base + py-2.5 : lisibilité et cible tactile pour un public âgé (WCAG 1.4.4 / 2.5.5).
 export const inputClass =
-  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-400 disabled:opacity-60";
+  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm outline-none transition focus-visible:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-60";
 
 export const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
@@ -50,11 +51,11 @@ export function Select(props: ComponentProps<"select">) {
 type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary: "bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-300",
+  primary: "bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-600",
   secondary:
-    "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50 focus:ring-gray-200",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-300",
-  ghost: "bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-200",
+    "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50 focus-visible:ring-gray-500",
+  danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600",
+  ghost: "bg-transparent text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-500",
 };
 
 export function Button({
@@ -65,7 +66,7 @@ export function Button({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm outline-none transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${buttonVariants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${buttonVariants[variant]} ${className}`}
     />
   );
 }
@@ -78,7 +79,7 @@ export function LinkButton({
   return (
     <Link
       {...props}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm outline-none transition focus:ring-2 ${buttonVariants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-offset-2 ${buttonVariants[variant]} ${className}`}
     />
   );
 }
@@ -97,7 +98,10 @@ export function Alert({
     warning: "bg-amber-50 text-amber-900 border-amber-200",
   };
   return (
-    <div className={`rounded-lg border px-4 py-3 text-sm ${styles[kind]}`}>
+    <div
+      role={kind === "error" ? "alert" : "status"}
+      className={`rounded-lg border px-4 py-3 text-sm ${styles[kind]}`}
+    >
       {children}
     </div>
   );
