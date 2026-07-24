@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Field, Input, Select, Textarea } from "@/components/ui";
+import { Field, Input, Textarea } from "@/components/ui";
 import PrintButton from "@/components/PrintButton";
 import { useT } from "@/components/I18nProvider";
 import {
@@ -64,23 +64,40 @@ export default function LetterEditor({
     <div>
       {/* Formulaire (non imprimé) */}
       <div className="space-y-4 print:hidden">
-        <Field
-          label={t("Type de courrier")}
-          htmlFor="template"
-          hint={t(template.hint)}
-        >
-          <Select
-            id="template"
-            value={templateId}
-            onChange={(e) => applyTemplate(e.target.value)}
-          >
-            {LETTER_TEMPLATES.map((m) => (
-              <option key={m.id} value={m.id}>
-                {t(m.label)}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <div>
+          <span className="mb-2 block text-sm font-medium text-gray-700">
+            {t("Type de courrier")}
+          </span>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {LETTER_TEMPLATES.map((m) => {
+              const selected = m.id === templateId;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => applyTemplate(m.id)}
+                  aria-pressed={selected}
+                  className={`rounded-lg border p-3 text-left transition ${
+                    selected
+                      ? "border-rose-500 bg-rose-50 ring-1 ring-rose-500"
+                      : "border-gray-200 bg-white hover:border-rose-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <span
+                    className={`block text-sm font-semibold ${
+                      selected ? "text-rose-700" : "text-gray-900"
+                    }`}
+                  >
+                    {t(m.label)}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-gray-500">
+                    {t(m.hint)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           <span className="font-semibold">{t("Base légale")} :</span>{" "}
