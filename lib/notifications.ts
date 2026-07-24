@@ -42,6 +42,8 @@ export async function notifyResidents(params: {
    */
   residenceId?: string | null;
   excludeUserId?: string;
+  /** Comptes à ne pas notifier (ex. signataires déjà acquis lors d'une relance). */
+  excludeUserIds?: string[];
   email?: boolean;
   detail?: string;
 }) {
@@ -52,15 +54,21 @@ export async function notifyResidents(params: {
     buildingId,
     residenceId,
     excludeUserId,
+    excludeUserIds,
     email,
     detail,
   } = params;
+
+  const excludedIds = [
+    ...(excludeUserId ? [excludeUserId] : []),
+    ...(excludeUserIds ?? []),
+  ];
 
   const users = await prisma.user.findMany({
     where: {
       status: "APPROVED",
       ...(residenceId ? { residenceId } : {}),
-      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+      ...(excludedIds.length ? { id: { notIn: excludedIds } } : {}),
       ...(buildingId
         ? {
             OR: [{ unit: { buildingId } }, { unitId: null }],

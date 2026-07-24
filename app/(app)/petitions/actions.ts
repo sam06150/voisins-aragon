@@ -126,6 +126,49 @@ export async function closePetition(formData: FormData) {
   redirect(`/petitions/${petitionId}`);
 }
 
+/**
+ * Relance les locataires qui n'ont PAS encore signé (notification + push).
+ * Réservé à l'auteur ou au staff, pétition ouverte, au plus une fois par 24 h.
+ */
+export async function remindPetition(formData: FormData) {
+  const user = await requireApproved();
+  const petitionId = formData.get("petitionId")?.toString() ?? "";
+  const petition = await prisma.petition.findFirst({
+    where: { AND: [optionalBuildingScopeWhere(scopeFor(user)), { id: petitionId }] },
+    include: { signatures: { select: { userId: true } } },
+  });
+  if (!petition || petition.closed) redirect(`/petitions/${petitionId}`);
+  if (petition.authorId !== user.id && !isStaff(user.role)) {
+    redirect(`/petitions/${petitionId}`);
+  }
+
+  // Anti-spam : une relance par 24 h maximum.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  if (
+    petition.lastRemindedAt &&
+    Date.now() - petition.lastRemindedAt.getTime() < DAY_MS
+  ) {
+    redirect(`/petitions/${petitionId}?error=reminded`);
+  }
+
+  await prisma.petition.update({
+    where: { id: petitionId },
+    data: { lastRemindedAt: new Date() },
+  });
+
+  await notifyResidents({
+    type: "PETITION",
+    message: `Rappel — pétition à signer : « ${petition.title} »`,
+    link: `/petitions/${petition.id}`,
+    buildingId: petition.buildingId,
+    residenceId: user.residenceId, // cloisonnement
+    excludeUserIds: petition.signatures.map((s) => s.userId), // déjà signé
+  });
+
+  revalidatePath(`/petitions/${petitionId}`);
+  redirect(`/petitions/${petitionId}?ok=reminded`);
+}
+
 /** Supprime une pétition (auteur ou staff). Signatures supprimées en cascade. */
 export async function deletePetition(formData: FormData) {
   const user = await requireApproved();

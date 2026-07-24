@@ -5,7 +5,7 @@ import { getI18n } from "@/lib/i18n";
 import { isStaff } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 import { scopeFor, optionalBuildingScopeWhere } from "@/lib/tenancy";
-import { Badge, Button, Card, Textarea } from "@/components/ui";
+import { Alert, Badge, Button, Card, Textarea } from "@/components/ui";
 import ConfirmButton from "@/components/ConfirmButton";
 import { formatDate } from "@/lib/labels";
 import {
@@ -13,17 +13,21 @@ import {
   deletePetition,
   signPetition,
   unsignPetition,
+  remindPetition,
 } from "../actions";
 
 export default async function PetitionDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const user = await requireApproved();
   const scope = scopeFor(user);
   const { t } = await getI18n();
   const { id } = await params;
+  const { ok, error } = await searchParams;
 
   const petition = await prisma.petition.findFirst({
     // 404 si la pétition est hors de la résidence de l'utilisateur.
@@ -56,6 +60,21 @@ export default async function PetitionDetailPage({
       >
         ← {t("Retour aux pétitions")}
       </Link>
+
+      {ok === "reminded" ? (
+        <div className="mb-4">
+          <Alert kind="success">
+            {t("Relance envoyée aux locataires qui n'ont pas encore signé.")}
+          </Alert>
+        </div>
+      ) : null}
+      {error === "reminded" ? (
+        <div className="mb-4">
+          <Alert kind="warning">
+            {t("Une relance a déjà été envoyée dans les dernières 24 heures.")}
+          </Alert>
+        </div>
+      ) : null}
 
       <Card>
         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -141,6 +160,19 @@ export default async function PetitionDetailPage({
           </p>
           {canManage ? (
             <div className="flex items-center gap-2">
+              {!petition.closed ? (
+                <form action={remindPetition}>
+                  <input type="hidden" name="petitionId" value={petition.id} />
+                  <ConfirmButton
+                    variant="neutral"
+                    confirmMessage={t(
+                      "Envoyer une relance (notification + push) à tous les locataires qui n'ont pas encore signé ?",
+                    )}
+                  >
+                    🔔 {t("Relancer")}
+                  </ConfirmButton>
+                </form>
+              ) : null}
               <form action={closePetition}>
                 <input type="hidden" name="petitionId" value={petition.id} />
                 <ConfirmButton

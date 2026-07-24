@@ -467,6 +467,8 @@ model Petition {
   author      User      @relation(fields: [authorId], references: [id])
   closed      Boolean   @default(false)
   goal        Int?
+  /** Dernière relance des non-signataires (limite anti-spam à 24 h). */
+  lastRemindedAt DateTime?
   createdAt   DateTime  @default(now())
 
   signatures PetitionSignature[]
